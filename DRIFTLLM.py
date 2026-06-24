@@ -18,6 +18,126 @@ class DRIFTLLM(PromptingLLM):
         self.node_checklist = "None"
         self.initial_node_checklist = "None"
         self.tool_permissions = {}
+        # PACT-DRIFT is strictly opt-in. The frozen global contract survives task resets;
+        # task contracts and provenance records never cross a benchmark sample boundary.
+        self.global_tool_contracts = None
+        self.task_contract = None
+        self.provenance_state = None
+        self.argument_validation_events = []
+        self.pact_drift_decision_summary = self._new_pact_drift_summary()
+        self._pact_contract_loaded = False
+
+    @staticmethod
+    def _new_pact_drift_summary():
+        return {
+            "num_argument_checks": 0,
+            "num_rejected_tool_calls": 0,
+            "num_model_guess_arguments": 0,
+            "num_injected_origin_arguments": 0,
+        }
+
+    def reset_pact_drift_runtime_state(self):
+        """Reset per-task PACT state without reloading the frozen global contract."""
+        if not self.args.enable_pact_drift:
+            return
+        from pact_drift.provenance import ProvenanceState
+
+        self.task_contract = None
+        self.provenance_state = ProvenanceState()
+        self.argument_validation_events = []
+        self.pact_drift_decision_summary = self._new_pact_drift_summary()
+
+    def _pact_drift_init_if_needed(self, runtime):
+        from pact_drift.contract_generator import generate_global_tool_contracts
+        from pact_drift.contracts import load_global_contracts, save_global_contracts
+        from pact_drift.provenance import ProvenanceState
+        from pact_drift.schema_utils import collect_tool_schemas_from_runtime, compute_schema_hash, compute_tool_schema_hash
+
+        current_tools = collect_tool_schemas_from_runtime(runtime)
+        if self.args.generate_tool_contracts:
+            # The standalone script is preferred because it collects all suites. This mode
+            # remains useful for a focused development run and is never used implicitly.
+            save_global_contracts(generate_global_tool_contracts(current_tools, model_name=self.args.model), self.args.tool_contract_path)
+            self.args.generate_tool_contracts = False
+        if not self._pact_contract_loaded:
+            self.global_tool_contracts = load_global_contracts(self.args.tool_contract_path)
+            self._pact_contract_loaded = True
+            if self.provenance_state is None:
+                self.provenance_state = ProvenanceState()
+            if self.args.pact_drift_debug:
+                self.logger.info(f"PACT-DRIFT: loaded global contracts from {self.args.tool_contract_path}")
+        if self.args.freeze_tool_contract:
+            if self.global_tool_contracts.tool_schema_hashes:
+                for tool in current_tools:
+                    expected = self.global_tool_contracts.tool_schema_hashes.get(tool["name"])
+                    actual = compute_tool_schema_hash(tool)
+                    if expected != actual:
+                        raise ValueError(f"Tool schema hash mismatch for {tool['name']}. current={actual}, contract={expected}")
+            elif compute_schema_hash(current_tools) != self.global_tool_contracts.schema_hash:
+                raise ValueError("Tool schema hash mismatch between the runtime and frozen global contract.")
+
+    def _pact_record_latest_tool_output(self, messages):
+        if not messages or messages[-1].get("role") != "tool" or self.provenance_state is None:
+            return
+        from pact_drift.extractors import extract_structured_fields
+        from pact_drift.provenance import ProvenanceRecord, propagate_input_provenance
+
+        last = messages[-1]
+        tool_call = last.get("tool_call")
+        tool_name = getattr(tool_call, "function", None) or (tool_call.get("function") if isinstance(tool_call, dict) else None)
+        tool_args = getattr(tool_call, "args", None) or (tool_call.get("args", {}) if isinstance(tool_call, dict) else {}) or {}
+        if not tool_name:
+            return
+        tool_output = last.get("content", "")
+        self.provenance_state.add_record(ProvenanceRecord(
+            value=tool_output,
+            trust="EXTERNAL" if tool_name == "read_file" else "TOOL_OUTPUT",
+            origins=[{"type": "tool_output", "tool": tool_name, "field": "raw_output"}],
+            forbidden_marks=["untrusted_raw_text"] if tool_name == "read_file" else [],
+            source_path=f"{tool_name}.output.raw",
+        ))
+        for record in extract_structured_fields(tool_name, tool_args, tool_output, self.task_contract):
+            self.provenance_state.add_record(record)
+        if tool_name == "get_iban":
+            inherited = None
+            for value in tool_args.values():
+                matches = self.provenance_state.find_by_value(value)
+                if matches:
+                    inherited = matches[-1]
+                    break
+            iban_value = tool_output
+            if isinstance(tool_output, str):
+                try:
+                    parsed_output = json.loads(tool_output)
+                except json.JSONDecodeError:
+                    parsed_output = None
+                if isinstance(parsed_output, dict):
+                    iban_value = parsed_output.get("iban", tool_output)
+                else:
+                    iban_match = re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b", tool_output)
+                    iban_value = iban_match.group(0) if iban_match else tool_output
+            elif isinstance(tool_output, dict):
+                iban_value = tool_output.get("iban", tool_output)
+            self.provenance_state.add_record(propagate_input_provenance(iban_value, inherited, "get_iban.output.iban"))
+
+    def pact_argument_constraint_validation(self, json_tool_calls, output, query, messages):
+        from pact_drift.validator import validate_tool_call_arguments
+
+        allow, events = validate_tool_call_arguments(json_tool_calls, self.global_tool_contracts, self.task_contract, self.provenance_state, self.args)
+        self.argument_validation_events.extend(events)
+        for event in events:
+            self.pact_drift_decision_summary["num_argument_checks"] += 1
+            provenance = event.get("resolved_provenance", {})
+            if provenance.get("trust") == "MODEL_GUESS":
+                self.pact_drift_decision_summary["num_model_guess_arguments"] += 1
+            if "injected_instruction" in provenance.get("forbidden_marks", []):
+                self.pact_drift_decision_summary["num_injected_origin_arguments"] += 1
+        if allow:
+            return None, output
+        self.pact_drift_decision_summary["num_rejected_tool_calls"] += 1
+        output["tool_calls"] = []
+        reason = events[-1]["reason"] if events else "argument provenance contract violation"
+        return {"role": "user", "content": "[CALL ERROR] The function call was refused because one or more arguments do not satisfy the required provenance contract. Please use only authorized task data and do not infer missing authority-bearing arguments.\nRefusal reason: " + reason + "\nUser Query: " + query}, output
 
     def _tool_message_to_user_message(self, tool_message) -> dict:
         """It places the output of the tool call in the <function_call> tags.
@@ -588,6 +708,12 @@ class DRIFTLLM(PromptingLLM):
             if isinstance(msg["content"], list) and len(msg["content"]) > 0:
                 msg["content"] = msg["content"][0]["content"]
 
+        self.achieve_tools(list(runtime.functions.values()))
+        if self.args.enable_pact_drift:
+            self._pact_drift_init_if_needed(runtime)
+            if self.args.enable_provenance_tracking:
+                self._pact_record_latest_tool_output(messages)
+
         adapted_messages = [
             self._tool_message_to_user_message(message) if message["role"] == "tool" else message
             for message in messages
@@ -595,7 +721,6 @@ class DRIFTLLM(PromptingLLM):
         openai_messages = [self._message_to_sharegpt(message) for message in adapted_messages]
         system_message = None
 
-        self.achieve_tools(list(runtime.functions.values()))
         if self.args.dynamic_validation and self.tool_permissions == {}:
             for tool in self.tools_docs_list:
                 self.tool_permissions[tool["name"]] = self.function_privilege_assignment(json.dumps(tool))
@@ -610,6 +735,19 @@ class DRIFTLLM(PromptingLLM):
                 completion = self.client.agent_run(openai_messages, self.tools_docs_list)
 
                 self.initial_constraints_build(completion)
+                if self.args.enable_pact_drift:
+                    from pact_drift.task_contract import generate_task_contract
+
+                    self.task_contract = generate_task_contract(
+                        user_task=query,
+                        allowed_trajectory=self.initial_function_trajectory,
+                        global_contracts=self.global_tool_contracts,
+                        tool_schemas=self.tools_docs_list,
+                        client=self.client,
+                        model_name=self.model,
+                    )
+                    if self.args.pact_drift_debug:
+                        self.logger.info(f"PACT-DRIFT task contract: {self.task_contract.to_json()}")
 
         # Injection Detection
         if self.args.injection_isolation:
@@ -681,14 +819,28 @@ class DRIFTLLM(PromptingLLM):
 
         # Trajectory, Chechlist Validation
         if self.args.dynamic_validation:
+            # The legacy validators mutate trajectory/checklist state, so preserve it before
+            # applying the additional PACT argument gate.
+            previous_function_trajectory = copy.deepcopy(self.function_trajectory)
+            previous_achieved_trajectory = copy.deepcopy(self.achieved_function_trajectory)
+            previous_node_checklist = copy.deepcopy(self.node_checklist)
             error_message, output = self.trajectory_constraint_validation(to_call_function, output, query, messages)
             if error_message:
                 error_message["content"] = f"</function_error>\n{error_message}\n</function_error>"
                 return query, runtime, env, [*messages, output, error_message], extra_args
-            
+
             error_message, output = self.checklist_constraint_validation(json_tool_calls, output, query, messages)
             if error_message:
                 error_message["content"] = f"</function_error>\n{error_message}\n</function_error>"
                 return query, runtime, env, [*messages, output, error_message], extra_args
+
+            if self.args.enable_pact_drift and self.args.enable_argument_validation:
+                error_message, output = self.pact_argument_constraint_validation(json_tool_calls, output, query, messages)
+                if error_message:
+                    self.function_trajectory = previous_function_trajectory
+                    self.achieved_function_trajectory = previous_achieved_trajectory
+                    self.node_checklist = previous_node_checklist
+                    error_message["content"] = f"</function_error>\n{error_message['content']}\n</function_error>"
+                    return query, runtime, env, [*messages, output, error_message], extra_args
 
         return query, runtime, env, [*messages, output], extra_args

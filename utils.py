@@ -40,6 +40,15 @@ def get_args(description='DRIFT'):
     parser.add_argument("--dynamic_validation", action='store_true', help="Whether to validate dynamically.")
     parser.add_argument("--adaptive_attack", action='store_true', help="Whether to implement adaptive attack.")
 
+    # PACT-DRIFT settings. All are opt-in so legacy DRIFT runs remain unchanged.
+    parser.add_argument("--enable_pact_drift", action="store_true", help="Enable PACT-DRIFT argument-level provenance validation.")
+    parser.add_argument("--tool_contract_path", type=str, default="contracts/agentdojo_global_tool_contracts.json", help="Path to frozen global tool contracts.")
+    parser.add_argument("--generate_tool_contracts", action="store_true", help="Generate tool contracts before running (prefer the offline script for full-suite contracts).")
+    parser.add_argument("--freeze_tool_contract", action="store_true", help="Require runtime tool schemas to match frozen contract hashes.")
+    parser.add_argument("--enable_provenance_tracking", action="store_true", help="Record runtime tool and argument provenance.")
+    parser.add_argument("--enable_argument_validation", action="store_true", help="Validate ACTION arguments against provenance contracts.")
+    parser.add_argument("--pact_drift_debug", action="store_true", help="Emit PACT-DRIFT debug logs.")
+
     # Environment
     parser.add_argument('--seed', type=int, default=98, help='Random Seed.')
 
