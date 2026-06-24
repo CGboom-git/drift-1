@@ -14,11 +14,12 @@ def main(args, suite_type):
     suites = (suite_type,) # banking, slack, travel, workspace
 
     model_name = args.model
+    run_name = args.run_name or model_name
 
     if args.adaptive_attack:
-        output_name = f"{model_name}-adaptive_attack/{suites[0]}"
+        output_name = f"{run_name}-adaptive_attack/{suites[0]}"
     else:
-        output_name = f"{model_name}/{suites[0]}"
+        output_name = f"{run_name}/{suites[0]}"
 
     output_dir = os.path.join("runs", output_name)
     if not os.path.exists(output_dir):
