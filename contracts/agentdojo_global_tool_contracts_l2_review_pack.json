@@ -1,0 +1,4964 @@
+{
+  "draft_contract_path": "contracts/agentdojo_global_tool_contracts_l2_draft.json",
+  "schema_hash": "9385d9902c55d6dd9bbb1fb051347f10b96d12a54f6ef275a2798afada760873",
+  "tools": {
+    "add_calendar_event_participants": {
+      "draft_contract": {
+        "args": {
+          "event_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'event_id' controls amount, time, mode, or behavior.",
+            "name": "event_id",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "participants": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'participants' controls amount, time, mode, or behavior.",
+            "name": "participants",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'add_calendar_event_participants' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "add_calendar_event_participants",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Adds the given `participants` to the event with the given `event_id`.\nIt will also email the new participants notifying them of the event.",
+        "name": "add_calendar_event_participants",
+        "parameters": {
+          "properties": {
+            "event_id": {
+              "description": "The ID of the event to add participants to.",
+              "title": "Event Id",
+              "type": "string"
+            },
+            "participants": {
+              "description": "The list of participants' email addresses to add to the event.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Participants",
+              "type": "array"
+            }
+          },
+          "required": [
+            "event_id",
+            "participants"
+          ],
+          "title": "Input schema for `add_calendar_event_participants`",
+          "type": "object"
+        }
+      }
+    },
+    "add_user_to_channel": {
+      "draft_contract": {
+        "args": {
+          "channel": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'channel' controls amount, time, mode, or behavior.",
+            "name": "channel",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "user": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'user' controls amount, time, mode, or behavior.",
+            "name": "user",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'add_user_to_channel' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "add_user_to_channel",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Add a user to a given channel.",
+        "name": "add_user_to_channel",
+        "parameters": {
+          "properties": {
+            "channel": {
+              "description": "The channel to add the user to.",
+              "title": "Channel",
+              "type": "string"
+            },
+            "user": {
+              "description": "The user to add to the channel.",
+              "title": "User",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user",
+            "channel"
+          ],
+          "title": "Input schema for `add_user_to_channel`",
+          "type": "object"
+        }
+      }
+    },
+    "append_to_file": {
+      "draft_contract": {
+        "args": {
+          "content": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'content' controls amount, time, mode, or behavior.",
+            "name": "content",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "file_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'file_id' controls amount, time, mode, or behavior.",
+            "name": "file_id",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'append_to_file' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "append_to_file",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Append content to a file in the cloud drive.",
+        "name": "append_to_file",
+        "parameters": {
+          "properties": {
+            "content": {
+              "description": "The content to append to the file.",
+              "title": "Content",
+              "type": "string"
+            },
+            "file_id": {
+              "description": "The ID of the file to append content to.",
+              "title": "File Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_id",
+            "content"
+          ],
+          "title": "Input schema for `append_to_file`",
+          "type": "object"
+        }
+      }
+    },
+    "cancel_calendar_event": {
+      "draft_contract": {
+        "args": {
+          "event_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'event_id' controls amount, time, mode, or behavior.",
+            "name": "event_id",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'cancel_calendar_event' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "cancel_calendar_event",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Cancels the event with the given `event_id`. The event will be marked as canceled and no longer appear in the calendar.\nIt will also send an email to the participants notifying them of the cancellation.",
+        "name": "cancel_calendar_event",
+        "parameters": {
+          "properties": {
+            "event_id": {
+              "description": "The ID of the event to cancel.",
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "event_id"
+          ],
+          "title": "Input schema for `cancel_calendar_event`",
+          "type": "object"
+        }
+      }
+    },
+    "check_restaurant_opening_hours": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'check_restaurant_opening_hours' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "check_restaurant_opening_hours",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the openning hours of the given restaurants, check if the restaurant is open.",
+        "name": "check_restaurant_opening_hours",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of the restaurant to get the operating hours for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `check_restaurant_opening_hours`",
+          "type": "object"
+        }
+      }
+    },
+    "create_calendar_event": {
+      "draft_contract": {
+        "args": {
+          "description": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'description' controls amount, time, mode, or behavior.",
+            "name": "description",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "end_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'end_time' controls amount, time, mode, or behavior.",
+            "name": "end_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "location": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'location' controls amount, time, mode, or behavior.",
+            "name": "location",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "participants": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'participants' controls amount, time, mode, or behavior.",
+            "name": "participants",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "start_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'start_time' controls amount, time, mode, or behavior.",
+            "name": "start_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "title": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'title' controls amount, time, mode, or behavior.",
+            "name": "title",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'create_calendar_event' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "create_calendar_event",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Creates a new calendar event with the given details and adds it to the calendar.\nIt also sends an email to the participants with the event details.",
+        "name": "create_calendar_event",
+        "parameters": {
+          "properties": {
+            "description": {
+              "default": "",
+              "description": "The description of the event.",
+              "title": "Description",
+              "type": "string"
+            },
+            "end_time": {
+              "description": "The end time of the event. Must be in format YYYY-MM-DD HH:MM.",
+              "title": "End Time",
+              "type": "string"
+            },
+            "location": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The location of the event. If `null`, no location is set.",
+              "title": "Location"
+            },
+            "participants": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The list of participants' email addresses. If `null`, no participants are set. The calendar owner's email address is always included..",
+              "title": "Participants"
+            },
+            "start_time": {
+              "description": "The start time of the event. Must be in format YYYY-MM-DD HH:MM.",
+              "title": "Start Time",
+              "type": "string"
+            },
+            "title": {
+              "description": "The title of the event.",
+              "title": "Title",
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "start_time",
+            "end_time"
+          ],
+          "title": "Input schema for `create_calendar_event`",
+          "type": "object"
+        }
+      }
+    },
+    "create_file": {
+      "draft_contract": {
+        "args": {
+          "content": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'content' controls amount, time, mode, or behavior.",
+            "name": "content",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "filename": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'filename' controls amount, time, mode, or behavior.",
+            "name": "filename",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'create_file' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "create_file",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Create a new file in the cloud drive.",
+        "name": "create_file",
+        "parameters": {
+          "properties": {
+            "content": {
+              "description": "The content of the file to create.",
+              "title": "Content",
+              "type": "string"
+            },
+            "filename": {
+              "description": "The name of the file to create.",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          "required": [
+            "filename",
+            "content"
+          ],
+          "title": "Input schema for `create_file`",
+          "type": "object"
+        }
+      }
+    },
+    "delete_email": {
+      "draft_contract": {
+        "args": {
+          "email_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'email_id' identifies an authority-bearing destination or object.",
+            "name": "email_id",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'delete_email' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "delete_email",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Deletes the email with the given `email_id` from the inbox.",
+        "name": "delete_email",
+        "parameters": {
+          "properties": {
+            "email_id": {
+              "description": "The id of the email to delete.",
+              "title": "Email Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "email_id"
+          ],
+          "title": "Input schema for `delete_email`",
+          "type": "object"
+        }
+      }
+    },
+    "delete_file": {
+      "draft_contract": {
+        "args": {
+          "file_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'file_id' controls amount, time, mode, or behavior.",
+            "name": "file_id",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'delete_file' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "delete_file",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Delete a file from the cloud drive by its filename.\nIt returns the file that was deleted.",
+        "name": "delete_file",
+        "parameters": {
+          "properties": {
+            "file_id": {
+              "description": "The name of the file to delete.",
+              "title": "File Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_id"
+          ],
+          "title": "Input schema for `delete_file`",
+          "type": "object"
+        }
+      }
+    },
+    "get_all_car_rental_companies_in_city": {
+      "draft_contract": {
+        "args": {
+          "city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'city' controls amount, time, mode, or behavior.",
+            "name": "city",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_all_car_rental_companies_in_city' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_all_car_rental_companies_in_city",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get all car rental companies in the given city.",
+        "name": "get_all_car_rental_companies_in_city",
+        "parameters": {
+          "properties": {
+            "city": {
+              "description": "The city to get car rental companies from.",
+              "title": "City",
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "title": "Input schema for `get_all_car_rental_companies_in_city`",
+          "type": "object"
+        }
+      }
+    },
+    "get_all_hotels_in_city": {
+      "draft_contract": {
+        "args": {
+          "city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'city' identifies an authority-bearing destination or object.",
+            "name": "city",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_all_hotels_in_city' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_all_hotels_in_city",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get all hotels in the given city.",
+        "name": "get_all_hotels_in_city",
+        "parameters": {
+          "properties": {
+            "city": {
+              "description": "The city to get hotels from.",
+              "title": "City",
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "title": "Input schema for `get_all_hotels_in_city`",
+          "type": "object"
+        }
+      }
+    },
+    "get_all_restaurants_in_city": {
+      "draft_contract": {
+        "args": {
+          "city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'city' controls amount, time, mode, or behavior.",
+            "name": "city",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_all_restaurants_in_city' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_all_restaurants_in_city",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get all restaurants in the given city.",
+        "name": "get_all_restaurants_in_city",
+        "parameters": {
+          "properties": {
+            "city": {
+              "description": "The city to get restaurants from.",
+              "title": "City",
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "title": "Input schema for `get_all_restaurants_in_city`",
+          "type": "object"
+        }
+      }
+    },
+    "get_balance": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_balance' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_balance",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get the balance of the account.",
+        "name": "get_balance",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_balance`",
+          "type": "object"
+        }
+      }
+    },
+    "get_car_fuel_options": {
+      "draft_contract": {
+        "args": {
+          "company_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company_name' controls amount, time, mode, or behavior.",
+            "name": "company_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_car_fuel_options' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_car_fuel_options",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the fuel options of the given car rental companies.",
+        "name": "get_car_fuel_options",
+        "parameters": {
+          "properties": {
+            "company_name": {
+              "description": "The name of the car rental company to get the fuel options for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Company Name",
+              "type": "array"
+            }
+          },
+          "required": [
+            "company_name"
+          ],
+          "title": "Input schema for `get_car_fuel_options`",
+          "type": "object"
+        }
+      }
+    },
+    "get_car_price_per_day": {
+      "draft_contract": {
+        "args": {
+          "company_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company_name' controls amount, time, mode, or behavior.",
+            "name": "company_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_car_price_per_day' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_car_price_per_day",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the price per day of the given car rental companies.",
+        "name": "get_car_price_per_day",
+        "parameters": {
+          "properties": {
+            "company_name": {
+              "description": "The name of the car rental company to get the price per day for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Company Name",
+              "type": "array"
+            }
+          },
+          "required": [
+            "company_name"
+          ],
+          "title": "Input schema for `get_car_price_per_day`",
+          "type": "object"
+        }
+      }
+    },
+    "get_car_rental_address": {
+      "draft_contract": {
+        "args": {
+          "company_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company_name' controls amount, time, mode, or behavior.",
+            "name": "company_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_car_rental_address' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_car_rental_address",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the address of the given car rental companies.",
+        "name": "get_car_rental_address",
+        "parameters": {
+          "properties": {
+            "company_name": {
+              "description": "The name of the car rental company to get the address for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Company Name",
+              "type": "array"
+            }
+          },
+          "required": [
+            "company_name"
+          ],
+          "title": "Input schema for `get_car_rental_address`",
+          "type": "object"
+        }
+      }
+    },
+    "get_car_types_available": {
+      "draft_contract": {
+        "args": {
+          "company_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company_name' controls amount, time, mode, or behavior.",
+            "name": "company_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_car_types_available' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_car_types_available",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the car types available for the given car rental companies.",
+        "name": "get_car_types_available",
+        "parameters": {
+          "properties": {
+            "company_name": {
+              "description": "The name of the car rental company to get the car types available for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Company Name",
+              "type": "array"
+            }
+          },
+          "required": [
+            "company_name"
+          ],
+          "title": "Input schema for `get_car_types_available`",
+          "type": "object"
+        }
+      }
+    },
+    "get_channels": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_channels' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_channels",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the list of channels in the slack.",
+        "name": "get_channels",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_channels`",
+          "type": "object"
+        }
+      }
+    },
+    "get_contact_information_for_restaurants": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_contact_information_for_restaurants' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_contact_information_for_restaurants",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get the contact information of the given restaurants.",
+        "name": "get_contact_information_for_restaurants",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of the restaurant to get the contact information for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_contact_information_for_restaurants`",
+          "type": "object"
+        }
+      }
+    },
+    "get_cuisine_type_for_restaurants": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_cuisine_type_for_restaurants' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_cuisine_type_for_restaurants",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the cuisine type of the given restaurants, could be: Italian, Chinese, Indian, Japanese.",
+        "name": "get_cuisine_type_for_restaurants",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of restaurants to get the cuisine type for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_cuisine_type_for_restaurants`",
+          "type": "object"
+        }
+      }
+    },
+    "get_current_day": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_current_day' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_current_day",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Returns the current day in ISO format, e.g. '2022-01-01'.\nIt is useful to know what the current day, year, or month is, as the assistant\nshould not assume what the current date is.",
+        "name": "get_current_day",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_current_day`",
+          "type": "object"
+        }
+      }
+    },
+    "get_day_calendar_events": {
+      "draft_contract": {
+        "args": {
+          "day": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'day' controls amount, time, mode, or behavior.",
+            "name": "day",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_day_calendar_events' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_day_calendar_events",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Returns the appointments for the given `day`. Returns a list of dictionaries with informations about each meeting.",
+        "name": "get_day_calendar_events",
+        "parameters": {
+          "properties": {
+            "day": {
+              "description": "The day for which to return the appointments. Must be in format YYYY-MM-DD.",
+              "title": "Day",
+              "type": "string"
+            }
+          },
+          "required": [
+            "day"
+          ],
+          "title": "Input schema for `get_day_calendar_events`",
+          "type": "object"
+        }
+      }
+    },
+    "get_dietary_restrictions_for_all_restaurants": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_dietary_restrictions_for_all_restaurants' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_dietary_restrictions_for_all_restaurants",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the dietary restrictions of the given restaurants, could be: Vegetarian, Vegan, Gluten-free, Dairy-free.",
+        "name": "get_dietary_restrictions_for_all_restaurants",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of the restaurant to get the dietary restrictions for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_dietary_restrictions_for_all_restaurants`",
+          "type": "object"
+        }
+      }
+    },
+    "get_draft_emails": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_draft_emails' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_draft_emails",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Returns all the draft emails in the inbox. Each email has a recipient, a subject, and a body.",
+        "name": "get_draft_emails",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_draft_emails`",
+          "type": "object"
+        }
+      }
+    },
+    "get_file_by_id": {
+      "draft_contract": {
+        "args": {
+          "file_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'file_id' identifies an authority-bearing destination or object.",
+            "name": "file_id",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_file_by_id' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_file_by_id",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get a file from a cloud drive by its ID.",
+        "name": "get_file_by_id",
+        "parameters": {
+          "properties": {
+            "file_id": {
+              "description": "The ID of the file to retrieve.",
+              "title": "File Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_id"
+          ],
+          "title": "Input schema for `get_file_by_id`",
+          "type": "object"
+        }
+      }
+    },
+    "get_flight_information": {
+      "draft_contract": {
+        "args": {
+          "arrival_city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'arrival_city' identifies an authority-bearing destination or object.",
+            "name": "arrival_city",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "departure_city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'departure_city' identifies an authority-bearing destination or object.",
+            "name": "departure_city",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_flight_information' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_flight_information",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the flight information from the departure city to the arrival city.",
+        "name": "get_flight_information",
+        "parameters": {
+          "properties": {
+            "arrival_city": {
+              "description": "The city to arrive at.",
+              "title": "Arrival City",
+              "type": "string"
+            },
+            "departure_city": {
+              "description": "The city to depart from.",
+              "title": "Departure City",
+              "type": "string"
+            }
+          },
+          "required": [
+            "departure_city",
+            "arrival_city"
+          ],
+          "title": "Input schema for `get_flight_information`",
+          "type": "object"
+        }
+      }
+    },
+    "get_hotels_address": {
+      "draft_contract": {
+        "args": {
+          "hotel_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'hotel_name' controls amount, time, mode, or behavior.",
+            "name": "hotel_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_hotels_address' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_hotels_address",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the address of the given hotel.",
+        "name": "get_hotels_address",
+        "parameters": {
+          "properties": {
+            "hotel_name": {
+              "description": "The name of the hotel to get the address for.",
+              "title": "Hotel Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "hotel_name"
+          ],
+          "title": "Input schema for `get_hotels_address`",
+          "type": "object"
+        }
+      }
+    },
+    "get_hotels_prices": {
+      "draft_contract": {
+        "args": {
+          "hotel_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'hotel_names' controls amount, time, mode, or behavior.",
+            "name": "hotel_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_hotels_prices' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_hotels_prices",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get all hotels within the given budget, should be within the price range.",
+        "name": "get_hotels_prices",
+        "parameters": {
+          "properties": {
+            "hotel_names": {
+              "description": "The name of the hotel to get the price range for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Hotel Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "hotel_names"
+          ],
+          "title": "Input schema for `get_hotels_prices`",
+          "type": "object"
+        }
+      }
+    },
+    "get_iban": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_iban' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": true,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_iban",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get the IBAN of the current bank account.",
+        "name": "get_iban",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_iban`",
+          "type": "object"
+        }
+      }
+    },
+    "get_most_recent_transactions": {
+      "draft_contract": {
+        "args": {
+          "n": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'n' controls amount, time, mode, or behavior.",
+            "name": "n",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_most_recent_transactions' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_most_recent_transactions",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get the list of the most recent transactions, e.g. to summarize the last n transactions.",
+        "name": "get_most_recent_transactions",
+        "parameters": {
+          "properties": {
+            "n": {
+              "default": 100,
+              "description": "Number of transactions to return",
+              "title": "N",
+              "type": "integer"
+            }
+          },
+          "title": "Input schema for `get_most_recent_transactions`",
+          "type": "object"
+        }
+      }
+    },
+    "get_price_for_restaurants": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_price_for_restaurants' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_price_for_restaurants",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the price per person of the given restaurants.",
+        "name": "get_price_for_restaurants",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of the restaurant to get the price per person for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_price_for_restaurants`",
+          "type": "object"
+        }
+      }
+    },
+    "get_rating_reviews_for_car_rental": {
+      "draft_contract": {
+        "args": {
+          "company_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company_name' controls amount, time, mode, or behavior.",
+            "name": "company_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_rating_reviews_for_car_rental' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_rating_reviews_for_car_rental",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the rating and reviews for the given car rental companies.",
+        "name": "get_rating_reviews_for_car_rental",
+        "parameters": {
+          "properties": {
+            "company_name": {
+              "description": "The name of the car rental company to get reviews for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Company Name",
+              "type": "array"
+            }
+          },
+          "required": [
+            "company_name"
+          ],
+          "title": "Input schema for `get_rating_reviews_for_car_rental`",
+          "type": "object"
+        }
+      }
+    },
+    "get_rating_reviews_for_hotels": {
+      "draft_contract": {
+        "args": {
+          "hotel_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'hotel_names' controls amount, time, mode, or behavior.",
+            "name": "hotel_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_rating_reviews_for_hotels' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_rating_reviews_for_hotels",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the rating and reviews for the given hotels.",
+        "name": "get_rating_reviews_for_hotels",
+        "parameters": {
+          "properties": {
+            "hotel_names": {
+              "description": "The names of the hotels to get reviews for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Hotel Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "hotel_names"
+          ],
+          "title": "Input schema for `get_rating_reviews_for_hotels`",
+          "type": "object"
+        }
+      }
+    },
+    "get_rating_reviews_for_restaurants": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_rating_reviews_for_restaurants' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_rating_reviews_for_restaurants",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the rating and reviews for the given restaurants.",
+        "name": "get_rating_reviews_for_restaurants",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The names of the restaurants to get reviews for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_rating_reviews_for_restaurants`",
+          "type": "object"
+        }
+      }
+    },
+    "get_received_emails": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "full",
+        "heuristic_reason": "'get_received_emails' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_received_emails",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Returns all the received emails in the inbox. Each email has a sender, a subject, and a body.",
+        "name": "get_received_emails",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_received_emails`",
+          "type": "object"
+        }
+      }
+    },
+    "get_restaurants_address": {
+      "draft_contract": {
+        "args": {
+          "restaurant_names": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant_names' controls amount, time, mode, or behavior.",
+            "name": "restaurant_names",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_restaurants_address' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_restaurants_address",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the address of the given restaurants.",
+        "name": "get_restaurants_address",
+        "parameters": {
+          "properties": {
+            "restaurant_names": {
+              "description": "The name of the restaurant to get the address for.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Restaurant Names",
+              "type": "array"
+            }
+          },
+          "required": [
+            "restaurant_names"
+          ],
+          "title": "Input schema for `get_restaurants_address`",
+          "type": "object"
+        }
+      }
+    },
+    "get_scheduled_transactions": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "full",
+        "heuristic_reason": "'get_scheduled_transactions' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_scheduled_transactions",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Get the list of scheduled transactions.",
+        "name": "get_scheduled_transactions",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_scheduled_transactions`",
+          "type": "object"
+        }
+      }
+    },
+    "get_sent_emails": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_sent_emails' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_sent_emails",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Returns all the sent emails in the inbox. Each email has a recipient, a subject, and a body.",
+        "name": "get_sent_emails",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_sent_emails`",
+          "type": "object"
+        }
+      }
+    },
+    "get_unread_emails": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "full",
+        "heuristic_reason": "'get_unread_emails' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_unread_emails",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Returns all the unread emails in the inbox. Each email has a sender, a subject, and a body.\nThe emails are marked as read after this function is called.",
+        "name": "get_unread_emails",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_unread_emails`",
+          "type": "object"
+        }
+      }
+    },
+    "get_user_info": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'get_user_info' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_user_info",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get the user information.",
+        "name": "get_user_info",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_user_info`",
+          "type": "object"
+        }
+      }
+    },
+    "get_user_information": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "full",
+        "heuristic_reason": "'get_user_information' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_user_information",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Get the user information, could be: first name, last name, ID number, email, phone number, address, passport number, bank account number, credit card number. These information are used for booking hotels, restaurants, car rentals, and flights.",
+        "name": "get_user_information",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `get_user_information`",
+          "type": "object"
+        }
+      }
+    },
+    "get_users_in_channel": {
+      "draft_contract": {
+        "args": {
+          "channel": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'channel' controls amount, time, mode, or behavior.",
+            "name": "channel",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_users_in_channel' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_users_in_channel",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Get the list of users in the given channel.",
+        "name": "get_users_in_channel",
+        "parameters": {
+          "properties": {
+            "channel": {
+              "description": "The channel to get the users from.",
+              "title": "Channel",
+              "type": "string"
+            }
+          },
+          "required": [
+            "channel"
+          ],
+          "title": "Input schema for `get_users_in_channel`",
+          "type": "object"
+        }
+      }
+    },
+    "get_webpage": {
+      "draft_contract": {
+        "args": {
+          "url": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'url' identifies an authority-bearing destination or object.",
+            "name": "url",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'get_webpage' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "get_webpage",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Returns the content of the webpage at a given URL.",
+        "name": "get_webpage",
+        "parameters": {
+          "properties": {
+            "url": {
+              "description": "The URL of the webpage.",
+              "title": "Url",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "Input schema for `get_webpage`",
+          "type": "object"
+        }
+      }
+    },
+    "invite_user_to_slack": {
+      "draft_contract": {
+        "args": {
+          "user": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'user' controls amount, time, mode, or behavior.",
+            "name": "user",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "user_email": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'user_email' controls amount, time, mode, or behavior.",
+            "name": "user_email",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'invite_user_to_slack' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "invite_user_to_slack",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Invites a user to the Slack workspace.",
+        "name": "invite_user_to_slack",
+        "parameters": {
+          "properties": {
+            "user": {
+              "description": "The user to invite.",
+              "title": "User",
+              "type": "string"
+            },
+            "user_email": {
+              "description": "The user email where invite should be sent.",
+              "title": "User Email",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user",
+            "user_email"
+          ],
+          "title": "Input schema for `invite_user_to_slack`",
+          "type": "object"
+        }
+      }
+    },
+    "list_files": {
+      "draft_contract": {
+        "args": {},
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'list_files' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "list_files",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Retrieve all files in the cloud drive.",
+        "name": "list_files",
+        "parameters": {
+          "properties": {},
+          "title": "Input schema for `list_files`",
+          "type": "object"
+        }
+      }
+    },
+    "post_webpage": {
+      "draft_contract": {
+        "args": {
+          "content": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'content' controls amount, time, mode, or behavior.",
+            "name": "content",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "url": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'url' identifies an authority-bearing destination or object.",
+            "name": "url",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'post_webpage' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "post_webpage",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Posts a webpage at a given URL with the given content.",
+        "name": "post_webpage",
+        "parameters": {
+          "properties": {
+            "content": {
+              "description": "The content of the webpage.",
+              "title": "Content",
+              "type": "string"
+            },
+            "url": {
+              "description": "The URL of the webpage.",
+              "title": "Url",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url",
+            "content"
+          ],
+          "title": "Input schema for `post_webpage`",
+          "type": "object"
+        }
+      }
+    },
+    "read_channel_messages": {
+      "draft_contract": {
+        "args": {
+          "channel": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'channel' controls amount, time, mode, or behavior.",
+            "name": "channel",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'read_channel_messages' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "read_channel_messages",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Read the messages from the given channel.",
+        "name": "read_channel_messages",
+        "parameters": {
+          "properties": {
+            "channel": {
+              "description": "The channel to read the messages from.",
+              "title": "Channel",
+              "type": "string"
+            }
+          },
+          "required": [
+            "channel"
+          ],
+          "title": "Input schema for `read_channel_messages`",
+          "type": "object"
+        }
+      }
+    },
+    "read_file": {
+      "draft_contract": {
+        "args": {
+          "file_path": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'file_path' identifies an authority-bearing destination or object.",
+            "name": "file_path",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'read_file' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "EXTERNAL",
+          "requires_structured_extraction": true
+        },
+        "tool_name": "read_file",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Reads the contents of the file at the given path.",
+        "name": "read_file",
+        "parameters": {
+          "properties": {
+            "file_path": {
+              "description": "The path to the file to read.",
+              "title": "File Path",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_path"
+          ],
+          "title": "Input schema for `read_file`",
+          "type": "object"
+        }
+      }
+    },
+    "read_inbox": {
+      "draft_contract": {
+        "args": {
+          "user": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'user' controls amount, time, mode, or behavior.",
+            "name": "user",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'read_inbox' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "read_inbox",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Read the messages from the given user inbox.",
+        "name": "read_inbox",
+        "parameters": {
+          "properties": {
+            "user": {
+              "description": "The user whose inbox to read.",
+              "title": "User",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user"
+          ],
+          "title": "Input schema for `read_inbox`",
+          "type": "object"
+        }
+      }
+    },
+    "remove_user_from_slack": {
+      "draft_contract": {
+        "args": {
+          "user": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'user' identifies an authority-bearing destination or object.",
+            "name": "user",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'remove_user_from_slack' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "remove_user_from_slack",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Remove a user from the Slack workspace.",
+        "name": "remove_user_from_slack",
+        "parameters": {
+          "properties": {
+            "user": {
+              "description": "The user to remove.",
+              "title": "User",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user"
+          ],
+          "title": "Input schema for `remove_user_from_slack`",
+          "type": "object"
+        }
+      }
+    },
+    "reschedule_calendar_event": {
+      "draft_contract": {
+        "args": {
+          "event_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'event_id' controls amount, time, mode, or behavior.",
+            "name": "event_id",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "new_end_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'new_end_time' controls amount, time, mode, or behavior.",
+            "name": "new_end_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "new_start_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'new_start_time' controls amount, time, mode, or behavior.",
+            "name": "new_start_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'reschedule_calendar_event' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "reschedule_calendar_event",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Reschedules the event with the given `event_id` to the new start and end times.\nIt will also send an email to the participants notifying them of the rescheduling.",
+        "name": "reschedule_calendar_event",
+        "parameters": {
+          "properties": {
+            "event_id": {
+              "description": "The ID of the event to reschedule.",
+              "title": "Event Id",
+              "type": "string"
+            },
+            "new_end_time": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The new end time of the event. Must be in format YYYY-MM-DD HH:MM.\nIf `null`, the end time will be computed based on the new start time to keep the event duration the same.",
+              "title": "New End Time"
+            },
+            "new_start_time": {
+              "description": "The new start time of the event. Must be in format YYYY-MM-DD HH:MM.",
+              "title": "New Start Time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "event_id",
+            "new_start_time"
+          ],
+          "title": "Input schema for `reschedule_calendar_event`",
+          "type": "object"
+        }
+      }
+    },
+    "reserve_car_rental": {
+      "draft_contract": {
+        "args": {
+          "company": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'company' controls amount, time, mode, or behavior.",
+            "name": "company",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "end_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'end_time' controls amount, time, mode, or behavior.",
+            "name": "end_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "start_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'start_time' controls amount, time, mode, or behavior.",
+            "name": "start_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'reserve_car_rental' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "reserve_car_rental",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Makes a reservation for a car rental with the provided details.",
+        "name": "reserve_car_rental",
+        "parameters": {
+          "properties": {
+            "company": {
+              "description": "Where the reservation is made. It must only be the name of the car rental company.",
+              "title": "Company",
+              "type": "string"
+            },
+            "end_time": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The reservation end time. Should be in ISO format 'YYYY-MM-DD HH:MM'.",
+              "title": "End Time"
+            },
+            "start_time": {
+              "description": "The reservation starting time. Should be in ISO format 'YYYY-MM-DD HH:MM'.",
+              "title": "Start Time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "company",
+            "start_time",
+            "end_time"
+          ],
+          "title": "Input schema for `reserve_car_rental`",
+          "type": "object"
+        }
+      }
+    },
+    "reserve_hotel": {
+      "draft_contract": {
+        "args": {
+          "end_day": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'end_day' controls amount, time, mode, or behavior.",
+            "name": "end_day",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "hotel": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'hotel' controls amount, time, mode, or behavior.",
+            "name": "hotel",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "start_day": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'start_day' controls amount, time, mode, or behavior.",
+            "name": "start_day",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'reserve_hotel' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "reserve_hotel",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Makes a reservation for a hotel with the provided details..",
+        "name": "reserve_hotel",
+        "parameters": {
+          "properties": {
+            "end_day": {
+              "description": "The check-out day for the hotel. Should be in ISO format 'YYYY-MM-DD'.",
+              "title": "End Day",
+              "type": "string"
+            },
+            "hotel": {
+              "description": "Where the reservation is made. It must only be the name of the hotel.",
+              "title": "Hotel",
+              "type": "string"
+            },
+            "start_day": {
+              "description": "The check-in day for the hotel. Should be in ISO format 'YYYY-MM-DD'.",
+              "title": "Start Day",
+              "type": "string"
+            }
+          },
+          "required": [
+            "hotel",
+            "start_day",
+            "end_day"
+          ],
+          "title": "Input schema for `reserve_hotel`",
+          "type": "object"
+        }
+      }
+    },
+    "reserve_restaurant": {
+      "draft_contract": {
+        "args": {
+          "restaurant": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'restaurant' controls amount, time, mode, or behavior.",
+            "name": "restaurant",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "start_time": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'start_time' controls amount, time, mode, or behavior.",
+            "name": "start_time",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "track_only",
+        "heuristic_reason": "'reserve_restaurant' does not match action or sensitive-read heuristics.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "reserve_restaurant",
+        "tool_type": "READ_LOW"
+      },
+      "schema": {
+        "description": "Makes a reservation for a restaurant with the provided details.",
+        "name": "reserve_restaurant",
+        "parameters": {
+          "properties": {
+            "restaurant": {
+              "description": "Where the reservation is made. It must only be the name of the restaurant.",
+              "title": "Restaurant",
+              "type": "string"
+            },
+            "start_time": {
+              "description": "The reservation time. Should be in ISO format 'YYYY-MM-DD HH:MM'.\nThe end time is automatically set to be two hours after the start of the reservation.",
+              "title": "Start Time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "restaurant",
+            "start_time"
+          ],
+          "title": "Input schema for `reserve_restaurant`",
+          "type": "object"
+        }
+      }
+    },
+    "schedule_transaction": {
+      "draft_contract": {
+        "args": {
+          "amount": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'amount' controls amount, time, mode, or behavior.",
+            "name": "amount",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "date": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'date' controls amount, time, mode, or behavior.",
+            "name": "date",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "recipient": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'recipient' controls amount, time, mode, or behavior.",
+            "name": "recipient",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "recurring": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'recurring' controls amount, time, mode, or behavior.",
+            "name": "recurring",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "subject": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'subject' controls amount, time, mode, or behavior.",
+            "name": "subject",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'schedule_transaction' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "schedule_transaction",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Schedule a transaction.",
+        "name": "schedule_transaction",
+        "parameters": {
+          "properties": {
+            "amount": {
+              "description": "Amount of the transaction",
+              "title": "Amount",
+              "type": "number"
+            },
+            "date": {
+              "description": "Next date of the transaction",
+              "title": "Date",
+              "type": "string"
+            },
+            "recipient": {
+              "description": "IBAN of the recipient",
+              "title": "Recipient",
+              "type": "string"
+            },
+            "recurring": {
+              "description": "Is the transaction recurring",
+              "title": "Recurring",
+              "type": "boolean"
+            },
+            "subject": {
+              "description": "Subject of the transaction",
+              "title": "Subject",
+              "type": "string"
+            }
+          },
+          "required": [
+            "recipient",
+            "amount",
+            "subject",
+            "date",
+            "recurring"
+          ],
+          "title": "Input schema for `schedule_transaction`",
+          "type": "object"
+        }
+      }
+    },
+    "search_calendar_events": {
+      "draft_contract": {
+        "args": {
+          "date": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'date' controls amount, time, mode, or behavior.",
+            "name": "date",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "query": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'query' controls amount, time, mode, or behavior.",
+            "name": "query",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_calendar_events' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_calendar_events",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Searches calendar events that match the given query in the tile or the description. If provided, filters events by date.",
+        "name": "search_calendar_events",
+        "parameters": {
+          "properties": {
+            "date": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The date for which to search events. Must be in format YYYY-MM-DD. If `null`, searches all events.",
+              "title": "Date"
+            },
+            "query": {
+              "description": "The query string to search for in event titles and descriptions.",
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "Input schema for `search_calendar_events`",
+          "type": "object"
+        }
+      }
+    },
+    "search_contacts_by_email": {
+      "draft_contract": {
+        "args": {
+          "query": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'query' controls amount, time, mode, or behavior.",
+            "name": "query",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_contacts_by_email' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_contacts_by_email",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Finds contacts in the inbox's contact list by email.\nIt returns a list of contacts that match the given email.",
+        "name": "search_contacts_by_email",
+        "parameters": {
+          "properties": {
+            "query": {
+              "description": "The email of the contacts to search for.",
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "Input schema for `search_contacts_by_email`",
+          "type": "object"
+        }
+      }
+    },
+    "search_contacts_by_name": {
+      "draft_contract": {
+        "args": {
+          "query": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'query' controls amount, time, mode, or behavior.",
+            "name": "query",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_contacts_by_name' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_contacts_by_name",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Finds contacts in the inbox's contact list by name.\nIt returns a list of contacts that match the given name.",
+        "name": "search_contacts_by_name",
+        "parameters": {
+          "properties": {
+            "query": {
+              "description": "The name of the contacts to search for.",
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "Input schema for `search_contacts_by_name`",
+          "type": "object"
+        }
+      }
+    },
+    "search_emails": {
+      "draft_contract": {
+        "args": {
+          "query": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'query' controls amount, time, mode, or behavior.",
+            "name": "query",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "sender": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'sender' controls amount, time, mode, or behavior.",
+            "name": "sender",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_emails' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_emails",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Searches for emails in the inbox that contain the given query in the subject or body. If `address` is provided,\nonly emails from that address are searched.",
+        "name": "search_emails",
+        "parameters": {
+          "properties": {
+            "query": {
+              "description": "The query to search for in the email subject or body. If empty, all emails are returned.",
+              "title": "Query",
+              "type": "string"
+            },
+            "sender": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The email address of the sender. If `null`, all emails are searched. Use `search_contacts_by_name`\nif the email address is unknown.",
+              "title": "Sender"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "Input schema for `search_emails`",
+          "type": "object"
+        }
+      }
+    },
+    "search_files": {
+      "draft_contract": {
+        "args": {
+          "query": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'query' controls amount, time, mode, or behavior.",
+            "name": "query",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_files' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_files",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Search for files in the cloud drive by content.",
+        "name": "search_files",
+        "parameters": {
+          "properties": {
+            "query": {
+              "description": "The string to search for in the files.",
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "Input schema for `search_files`",
+          "type": "object"
+        }
+      }
+    },
+    "search_files_by_filename": {
+      "draft_contract": {
+        "args": {
+          "filename": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'filename' controls amount, time, mode, or behavior.",
+            "name": "filename",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'search_files_by_filename' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "search_files_by_filename",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Get a file from a cloud drive by its filename. It returns a list of files.\nEach file contains the file id, the content, the file type, and the filename.",
+        "name": "search_files_by_filename",
+        "parameters": {
+          "properties": {
+            "filename": {
+              "description": "The name of the file to retrieve.",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          "required": [
+            "filename"
+          ],
+          "title": "Input schema for `search_files_by_filename`",
+          "type": "object"
+        }
+      }
+    },
+    "send_channel_message": {
+      "draft_contract": {
+        "args": {
+          "body": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "injected_instruction",
+              "unknown_origin"
+            ],
+            "R": [
+              "non_instructional_content",
+              "task_relevance",
+              "no_policy_override"
+            ],
+            "heuristic_reason": "'body' carries user-visible or tool-visible content.",
+            "name": "body",
+            "role": "content",
+            "tau_min": "TOOL_OUTPUT"
+          },
+          "channel": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'channel' controls amount, time, mode, or behavior.",
+            "name": "channel",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'send_channel_message' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "send_channel_message",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Send a channel message from `author` to `channel` with the given `content`.",
+        "name": "send_channel_message",
+        "parameters": {
+          "properties": {
+            "body": {
+              "description": "The body of the message.",
+              "title": "Body",
+              "type": "string"
+            },
+            "channel": {
+              "description": "The channel to send the message to.",
+              "title": "Channel",
+              "type": "string"
+            }
+          },
+          "required": [
+            "channel",
+            "body"
+          ],
+          "title": "Input schema for `send_channel_message`",
+          "type": "object"
+        }
+      }
+    },
+    "send_direct_message": {
+      "draft_contract": {
+        "args": {
+          "body": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "injected_instruction",
+              "unknown_origin"
+            ],
+            "R": [
+              "non_instructional_content",
+              "task_relevance",
+              "no_policy_override"
+            ],
+            "heuristic_reason": "'body' carries user-visible or tool-visible content.",
+            "name": "body",
+            "role": "content",
+            "tau_min": "TOOL_OUTPUT"
+          },
+          "recipient": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'recipient' controls amount, time, mode, or behavior.",
+            "name": "recipient",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'send_direct_message' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "send_direct_message",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Send a direct message from `author` to `recipient` with the given `content`.",
+        "name": "send_direct_message",
+        "parameters": {
+          "properties": {
+            "body": {
+              "description": "The body of the message.",
+              "title": "Body",
+              "type": "string"
+            },
+            "recipient": {
+              "description": "The recipient of the message.",
+              "title": "Recipient",
+              "type": "string"
+            }
+          },
+          "required": [
+            "recipient",
+            "body"
+          ],
+          "title": "Input schema for `send_direct_message`",
+          "type": "object"
+        }
+      }
+    },
+    "send_email": {
+      "draft_contract": {
+        "args": {
+          "attachments": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'attachments' controls amount, time, mode, or behavior.",
+            "name": "attachments",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "bcc": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'bcc' controls amount, time, mode, or behavior.",
+            "name": "bcc",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "body": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'body' identifies an authority-bearing destination or object.",
+            "name": "body",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "cc": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'cc' controls amount, time, mode, or behavior.",
+            "name": "cc",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "recipients": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'recipients' controls amount, time, mode, or behavior.",
+            "name": "recipients",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "subject": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'subject' identifies an authority-bearing destination or object.",
+            "name": "subject",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'send_email' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "send_email",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Sends an email with the given `body` to the given `address`. Returns a dictionary with the email details.",
+        "name": "send_email",
+        "parameters": {
+          "properties": {
+            "attachments": {
+              "anyOf": [
+                {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The list of attachments to include in the email. If `null`, no attachments are included.\nIf the attachment has as \"type\" \"file\", then it is expected to have a field \"file_id\", with the ID of the file in the\ncloud drive. If the attachment has as \"type\" \"event\", then it is expected to be a calendar event in the field \"event_details\".\nA calendar event has the following fields: `title`, `description`, `start_time` (in ISO format), `end_time`\n(in ISO format), `location`, and participants (a list of emails).",
+              "title": "Attachments"
+            },
+            "bcc": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The list of email addresses to include in the BCC field. If `null`, no email addresses are included.",
+              "title": "Bcc"
+            },
+            "body": {
+              "description": "The body of the email.",
+              "title": "Body",
+              "type": "string"
+            },
+            "cc": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The list of email addresses to include in the CC field. If `null`, no email addresses are included.",
+              "title": "Cc"
+            },
+            "recipients": {
+              "description": "The list with the email addresses of the recipients.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Recipients",
+              "type": "array"
+            },
+            "subject": {
+              "description": "The subject of the email.",
+              "title": "Subject",
+              "type": "string"
+            }
+          },
+          "required": [
+            "recipients",
+            "subject",
+            "body"
+          ],
+          "title": "Input schema for `send_email`",
+          "type": "object"
+        }
+      }
+    },
+    "send_money": {
+      "draft_contract": {
+        "args": {
+          "amount": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin",
+              "unrequested_transaction_history"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "amount controls the transferred financial value",
+            "name": "amount",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "date": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "date controls when the transfer is executed",
+            "name": "date",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "recipient": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin",
+              "unrequested_transaction_history"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "recipient determines the destination of a money transfer",
+            "name": "recipient",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "subject": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "injected_instruction",
+              "unknown_origin"
+            ],
+            "R": [
+              "non_instructional_content",
+              "task_relevance"
+            ],
+            "heuristic_reason": "subject carries transfer memo content",
+            "name": "subject",
+            "role": "content",
+            "tau_min": "TOOL_OUTPUT"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'send_money' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "send_money",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Sends a transaction to the recipient.",
+        "name": "send_money",
+        "parameters": {
+          "properties": {
+            "amount": {
+              "description": "Amount of the transaction",
+              "title": "Amount",
+              "type": "number"
+            },
+            "date": {
+              "description": "Date of the transaction",
+              "title": "Date",
+              "type": "string"
+            },
+            "recipient": {
+              "description": "IBAN of the recipient",
+              "title": "Recipient",
+              "type": "string"
+            },
+            "subject": {
+              "description": "Subject of the transaction",
+              "title": "Subject",
+              "type": "string"
+            }
+          },
+          "required": [
+            "recipient",
+            "amount",
+            "subject",
+            "date"
+          ],
+          "title": "Input schema for `send_money`",
+          "type": "object"
+        }
+      }
+    },
+    "share_file": {
+      "draft_contract": {
+        "args": {
+          "email": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'email' identifies an authority-bearing destination or object.",
+            "name": "email",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "file_id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "'file_id' identifies an authority-bearing destination or object.",
+            "name": "file_id",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "permission": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'permission' controls amount, time, mode, or behavior.",
+            "name": "permission",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "control_check_and_track",
+        "heuristic_reason": "'share_file' or its description indicates sensitive reads.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "share_file",
+        "tool_type": "READ_SENSITIVE"
+      },
+      "schema": {
+        "description": "Share a file with a user.",
+        "name": "share_file",
+        "parameters": {
+          "$defs": {
+            "SharingPermission": {
+              "enum": [
+                "r",
+                "rw"
+              ],
+              "title": "SharingPermission",
+              "type": "string"
+            }
+          },
+          "properties": {
+            "email": {
+              "description": "The email of the user to share the file with.",
+              "title": "Email",
+              "type": "string"
+            },
+            "file_id": {
+              "description": "The ID of the file to share.",
+              "title": "File Id",
+              "type": "string"
+            },
+            "permission": {
+              "$ref": "#/$defs/SharingPermission",
+              "description": "The permission level to grant the user."
+            }
+          },
+          "required": [
+            "file_id",
+            "email",
+            "permission"
+          ],
+          "title": "Input schema for `share_file`",
+          "type": "object"
+        }
+      }
+    },
+    "update_password": {
+      "draft_contract": {
+        "args": {
+          "password": {
+            "D": [
+              "user_explicit",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "credential_leakage",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_credential_use"
+            ],
+            "heuristic_reason": "'password' names an authentication or secret-bearing value.",
+            "name": "password",
+            "role": "credential",
+            "tau_min": "TRUSTED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'update_password' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "update_password",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Update the user password.",
+        "name": "update_password",
+        "parameters": {
+          "properties": {
+            "password": {
+              "description": "New password for the user",
+              "title": "Password",
+              "type": "string"
+            }
+          },
+          "required": [
+            "password"
+          ],
+          "title": "Input schema for `update_password`",
+          "type": "object"
+        }
+      }
+    },
+    "update_scheduled_transaction": {
+      "draft_contract": {
+        "args": {
+          "amount": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "amount controls scheduled financial value",
+            "name": "amount",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "date": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "date controls scheduled execution",
+            "name": "date",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "id": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "exact_match_to_authorized_source",
+              "trusted_tool_derivation",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_object_selection",
+              "task_relevance"
+            ],
+            "heuristic_reason": "id selects the scheduled transaction to update",
+            "name": "id",
+            "role": "selector",
+            "tau_min": "TOOL_OUTPUT"
+          },
+          "recipient": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "trusted_tool_derivation",
+              "exact_match_to_authorized_source"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "untrusted_raw_text",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_destination",
+              "no_external_redirection"
+            ],
+            "heuristic_reason": "recipient is the updated transfer destination",
+            "name": "recipient",
+            "role": "target",
+            "tau_min": "DELEGATED"
+          },
+          "recurring": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'recurring' controls amount, time, mode, or behavior.",
+            "name": "recurring",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "subject": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'subject' controls amount, time, mode, or behavior.",
+            "name": "subject",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'update_scheduled_transaction' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "update_scheduled_transaction",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Update a scheduled transaction.",
+        "name": "update_scheduled_transaction",
+        "parameters": {
+          "properties": {
+            "amount": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Amount of the transaction (optional)",
+              "title": "Amount"
+            },
+            "date": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Next date of the transaction (optional)",
+              "title": "Date"
+            },
+            "id": {
+              "description": "ID of the transaction (mandatory)",
+              "title": "Id",
+              "type": "integer"
+            },
+            "recipient": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "IBAN of the recipient (optional)",
+              "title": "Recipient"
+            },
+            "recurring": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Is the transaction recurring (optional)",
+              "title": "Recurring"
+            },
+            "subject": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Subject of the transaction (optional)",
+              "title": "Subject"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "title": "Input schema for `update_scheduled_transaction`",
+          "type": "object"
+        }
+      }
+    },
+    "update_user_info": {
+      "draft_contract": {
+        "args": {
+          "city": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'city' controls amount, time, mode, or behavior.",
+            "name": "city",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "first_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'first_name' controls amount, time, mode, or behavior.",
+            "name": "first_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "last_name": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'last_name' controls amount, time, mode, or behavior.",
+            "name": "last_name",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          },
+          "street": {
+            "D": [
+              "user_explicit",
+              "task_delegation",
+              "structured_extraction",
+              "exact_match_to_authorized_source",
+              "schema_validated_parse"
+            ],
+            "F": [
+              "model_guess",
+              "injected_instruction",
+              "default_without_authorization",
+              "unknown_origin"
+            ],
+            "R": [
+              "authorized_control_value",
+              "structured_field_required"
+            ],
+            "heuristic_reason": "'street' controls amount, time, mode, or behavior.",
+            "name": "street",
+            "role": "control",
+            "tau_min": "DELEGATED"
+          }
+        },
+        "check_mode": "full",
+        "heuristic_reason": "'update_user_info' or its description indicates state-changing behavior.",
+        "output": {
+          "propagate_input_origins": false,
+          "raw_output_trust": "TOOL_OUTPUT",
+          "requires_structured_extraction": false
+        },
+        "tool_name": "update_user_info",
+        "tool_type": "ACTION"
+      },
+      "schema": {
+        "description": "Update the user information.",
+        "name": "update_user_info",
+        "parameters": {
+          "properties": {
+            "city": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "City of the user (optional)",
+              "title": "City"
+            },
+            "first_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "First name of the user (optional)",
+              "title": "First Name"
+            },
+            "last_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Last name of the user (optional)",
+              "title": "Last Name"
+            },
+            "street": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Street of the user (optional)",
+              "title": "Street"
+            }
+          },
+          "title": "Input schema for `update_user_info`",
+          "type": "object"
+        }
+      }
+    }
+  }
+}
