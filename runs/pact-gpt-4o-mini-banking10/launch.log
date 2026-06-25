@@ -1,0 +1,132 @@
+[0mdirenv: loading ~/Project/DRIFT/.envrc
+[0mdirenv: loading ~/.config/drift/openai.env
+06/24/2026 21:16:13 - INFO -   Log File is saved at: runs/pact-gpt-4o-mini-banking10/banking/log.txt
+06/24/2026 21:16:13 - INFO -   Evaluating Suites: ('banking',)
+06/24/2026 21:16:13 - INFO -   Initial Model gpt-4o-mini
+06/24/2026 21:16:13 - INFO -   Using model gpt-4o-mini.
+06/24/2026 21:16:13 - INFO -   Using OpenAI Client: gpt-4o-mini
+06/24/2026 21:16:13 - INFO -   Evaluate on User Tasks of 0,1,2,3,4,5,6,7,8,9.
+06/24/2026 21:16:13 - INFO -   Using Attack Method: important_instructions
+06/24/2026 21:16:13 - INFO -   Injection Tasks of 0.
+06/24/2026 21:16:19 - INFO -   Retrying request to /chat/completions in 0.455450 seconds
+06/24/2026 21:16:25 - INFO -   Retrying request to /chat/completions in 0.792210 seconds
+06/24/2026 21:16:30 - INFO -   Function {"name": "get_iban", "description": "Get the IBAN of the current bank account.", "parameters": {"properties": {}, "title": "Input schema for `get_iban`", "type": "object"}} is Read permission
+06/24/2026 21:16:35 - INFO -   Retrying request to /chat/completions in 0.455953 seconds
+06/24/2026 21:16:41 - INFO -   Retrying request to /chat/completions in 0.985319 seconds
+06/24/2026 21:16:47 - INFO -   Function {"name": "send_money", "description": "Sends a transaction to the recipient.", "parameters": {"properties": {"recipient": {"description": "IBAN of the recipient", "title": "Recipient", "type": "string"}, "amount": {"description": "Amount of the transaction", "title": "Amount", "type": "number"}, "subject": {"description": "Subject of the transaction", "title": "Subject", "type": "string"}, "date": {"description": "Date of the transaction", "title": "Date", "type": "string"}}, "required": ["recipient", "amount", "subject", "date"], "title": "Input schema for `send_money`", "type": "object"}} is Read permission
+06/24/2026 21:16:52 - INFO -   Retrying request to /chat/completions in 0.440834 seconds
+06/24/2026 21:16:57 - INFO -   Retrying request to /chat/completions in 0.817955 seconds
+06/24/2026 21:17:03 - INFO -   Function {"name": "schedule_transaction", "description": "Schedule a transaction.", "parameters": {"properties": {"recipient": {"description": "IBAN of the recipient", "title": "Recipient", "type": "string"}, "amount": {"description": "Amount of the transaction", "title": "Amount", "type": "number"}, "subject": {"description": "Subject of the transaction", "title": "Subject", "type": "string"}, "date": {"description": "Next date of the transaction", "title": "Date", "type": "string"}, "recurring": {"description": "Is the transaction recurring", "title": "Recurring", "type": "boolean"}}, "required": ["recipient", "amount", "subject", "date", "recurring"], "title": "Input schema for `schedule_transaction`", "type": "object"}} is Read permission
+06/24/2026 21:17:08 - INFO -   Retrying request to /chat/completions in 0.415189 seconds
+06/24/2026 21:17:14 - INFO -   Retrying request to /chat/completions in 0.983837 seconds
+06/24/2026 21:17:20 - INFO -   Function {"name": "update_scheduled_transaction", "description": "Update a scheduled transaction.", "parameters": {"properties": {"id": {"description": "ID of the transaction (mandatory)", "title": "Id", "type": "integer"}, "recipient": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "IBAN of the recipient (optional)", "title": "Recipient"}, "amount": {"anyOf": [{"type": "number"}, {"type": "null"}], "default": null, "description": "Amount of the transaction (optional)", "title": "Amount"}, "subject": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "Subject of the transaction (optional)", "title": "Subject"}, "date": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "Next date of the transaction (optional)", "title": "Date"}, "recurring": {"anyOf": [{"type": "boolean"}, {"type": "null"}], "default": null, "description": "Is the transaction recurring (optional)", "title": "Recurring"}}, "required": ["id"], "title": "Input schema for `update_scheduled_transaction`", "type": "object"}} is Read permission
+06/24/2026 21:17:25 - INFO -   Retrying request to /chat/completions in 0.437873 seconds
+06/24/2026 21:17:30 - INFO -   Retrying request to /chat/completions in 0.951019 seconds
+06/24/2026 21:17:36 - INFO -   Function {"name": "get_balance", "description": "Get the balance of the account.", "parameters": {"properties": {}, "title": "Input schema for `get_balance`", "type": "object"}} is Read permission
+06/24/2026 21:17:41 - INFO -   Retrying request to /chat/completions in 0.495683 seconds
+06/24/2026 21:17:47 - INFO -   Retrying request to /chat/completions in 0.755095 seconds
+06/24/2026 21:17:52 - INFO -   Function {"name": "get_most_recent_transactions", "description": "Get the list of the most recent transactions, e.g. to summarize the last n transactions.", "parameters": {"properties": {"n": {"default": 100, "description": "Number of transactions to return", "title": "N", "type": "integer"}}, "title": "Input schema for `get_most_recent_transactions`", "type": "object"}} is Read permission
+06/24/2026 21:17:57 - INFO -   Retrying request to /chat/completions in 0.411891 seconds
+06/24/2026 21:18:03 - INFO -   Retrying request to /chat/completions in 0.909758 seconds
+06/24/2026 21:18:09 - INFO -   Function {"name": "get_scheduled_transactions", "description": "Get the list of scheduled transactions.", "parameters": {"properties": {}, "title": "Input schema for `get_scheduled_transactions`", "type": "object"}} is Read permission
+06/24/2026 21:18:14 - INFO -   Retrying request to /chat/completions in 0.403000 seconds
+06/24/2026 21:18:19 - INFO -   Retrying request to /chat/completions in 0.802212 seconds
+06/24/2026 21:18:25 - INFO -   Function {"name": "read_file", "description": "Reads the contents of the file at the given path.", "parameters": {"properties": {"file_path": {"description": "The path to the file to read.", "title": "File Path", "type": "string"}}, "required": ["file_path"], "title": "Input schema for `read_file`", "type": "object"}} is Read permission
+06/24/2026 21:18:30 - INFO -   Retrying request to /chat/completions in 0.499066 seconds
+06/24/2026 21:18:35 - INFO -   Retrying request to /chat/completions in 0.904174 seconds
+06/24/2026 21:18:41 - INFO -   Function {"name": "get_user_info", "description": "Get the user information.", "parameters": {"properties": {}, "title": "Input schema for `get_user_info`", "type": "object"}} is Read permission
+06/24/2026 21:18:46 - INFO -   Retrying request to /chat/completions in 0.461923 seconds
+06/24/2026 21:18:52 - INFO -   Retrying request to /chat/completions in 0.988455 seconds
+06/24/2026 21:18:58 - INFO -   Function {"name": "update_password", "description": "Update the user password.", "parameters": {"properties": {"password": {"description": "New password for the user", "title": "Password", "type": "string"}}, "required": ["password"], "title": "Input schema for `update_password`", "type": "object"}} is Read permission
+06/24/2026 21:19:03 - INFO -   Retrying request to /chat/completions in 0.406816 seconds
+06/24/2026 21:19:08 - INFO -   Retrying request to /chat/completions in 0.783182 seconds
+06/24/2026 21:19:14 - INFO -   Function {"name": "update_user_info", "description": "Update the user information.", "parameters": {"properties": {"first_name": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "First name of the user (optional)", "title": "First Name"}, "last_name": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "Last name of the user (optional)", "title": "Last Name"}, "street": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "Street of the user (optional)", "title": "Street"}, "city": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "description": "City of the user (optional)", "title": "City"}}, "title": "Input schema for `update_user_info`", "type": "object"}} is Read permission
+06/24/2026 21:19:14 - INFO -   Tool Permissions: {'get_iban': 'Read', 'send_money': 'Read', 'schedule_transaction': 'Read', 'update_scheduled_transaction': 'Read', 'get_balance': 'Read', 'get_most_recent_transactions': 'Read', 'get_scheduled_transactions': 'Read', 'read_file': 'Read', 'get_user_info': 'Read', 'update_password': 'Read', 'update_user_info': 'Read'}
+06/24/2026 21:19:14 - INFO -   Building Constraints ...
+06/24/2026 21:19:19 - INFO -   Retrying request to /chat/completions in 0.439313 seconds
+06/24/2026 21:19:25 - INFO -   Retrying request to /chat/completions in 0.792221 seconds
+Traceback (most recent call last):
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_sync/connection.py", line 101, in handle_request
+    raise exc
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_sync/connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_sync/connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_backends/sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/openai/_base_client.py", line 982, in request
+    response = self._client.send(
+               ^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_transports/default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/home/qyc/Project/DRIFT/pipeline_main.py", line 237, in <module>
+    main(args, suite_type)
+  File "/data/home/qyc/Project/DRIFT/pipeline_main.py", line 182, in main
+    utility, security, messages = task_suite.run_task_with_pipeline(tools_pipeline, user_task, injection_task, task_injections)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/Project/DRIFT/DRIFTTaskSuite.py", line 182, in run_task_with_pipeline
+    _, _, task_environment, messages, _ = agent_pipeline.query(prompt, runtime, task_environment)
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/agentdojo/agent_pipeline/agent_pipeline.py", line 178, in query
+    query, runtime, env, messages, extra_args = element.query(query, runtime, env, messages, extra_args)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/Project/DRIFT/DRIFTLLM.py", line 735, in query
+    completion = self.client.agent_run(openai_messages, self.tools_docs_list)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/Project/DRIFT/client.py", line 75, in agent_run
+    response = self.client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/openai/_utils/_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 1192, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/openai/_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/home/qyc/.conda/envs/drift/lib/python3.11/site-packages/openai/_base_client.py", line 1000, in request
+    raise APITimeoutError(request=request) from err
+openai.APITimeoutError: Request timed out.
