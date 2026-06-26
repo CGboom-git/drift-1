@@ -5,6 +5,8 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from pact_drift.task_flow_contract_generator import extract_explicit_user_fields
+
 
 @dataclass
 class IFCProvenanceRecord:
@@ -60,6 +62,39 @@ _FIELD_PATTERNS = {
     "due_date": ("due date", "payment date", "date"),
 }
 
+_RAW_EXTERNAL_TEXT_TOOLS = {
+    "read_file",
+    "get_file_by_id",
+    "get_webpage",
+    "read_channel_messages",
+    "get_received_emails",
+    "get_unread_emails",
+    "search_emails",
+}
+
+
+def record_user_explicit_fields_ifc(
+    user_query: str,
+    task_flow_contract: Any,
+    provenance_state: IFCProvenanceState,
+) -> None:
+    for field_name, value in extract_explicit_user_fields(user_query).items():
+        source_path = f"user.explicit.{field_name}"
+        if provenance_state.find_by_path(source_path):
+            continue
+        provenance_state.add_record(
+            IFCProvenanceRecord(
+                value=value,
+                source_path=source_path,
+                I_label="USER",
+                C_label="USER_PRIVATE",
+                marks=[],
+                transformations=["user_explicit", "exact_match_to_authorized_source"],
+                authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
+                metadata={"kind": "user_explicit"},
+            )
+        )
+
 
 def record_tool_output_ifc(
     tool_name: str,
@@ -77,10 +112,13 @@ def record_tool_output_ifc(
     raw_i = output_policy.get("I_label", "TOOL_OUTPUT")
     raw_c = output_policy.get("C_label", "INTERNAL")
     raw_marks: list[str] = []
-    if output_policy.get("requires_structured_extraction"):
+    requires_structured_extraction = output_policy.get("requires_structured_extraction") or tool_name in _RAW_EXTERNAL_TEXT_TOOLS
+    if requires_structured_extraction:
         raw_i = "EXTERNAL"
         raw_marks.append("raw_external_content")
     if tool_type == "READ_SENSITIVE" and not in_planned_trajectory:
+        if not requires_structured_extraction:
+            raw_i = "TOOL_OUTPUT"
         raw_marks.append("unauthorized_tool_output")
     raw_path = f"{source_base}.raw"
     provenance_state.add_record(
@@ -137,7 +175,7 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
                 I_label="DELEGATED",
                 C_label="SENSITIVE" if field_name in {"amount", "due_date"} else "USER_PRIVATE",
                 marks=[],
-                transformations=["task_delegation", "structured_extraction"],
+                transformations=["task_delegation", "structured_extraction", "schema_validated_parse", "exact_match_to_authorized_source"],
                 authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
                 metadata={"tool": "read_file", "field": f"invoice.{field_name}"},
             )

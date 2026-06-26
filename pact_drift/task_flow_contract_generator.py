@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 try:
@@ -47,15 +48,9 @@ def deterministic_task_flow_contract(
     initial_function_trajectory: list[str],
     global_contract: IFCGlobalContract,
 ) -> TaskFlowContract:
-    del user_query
+    explicit_fields = extract_explicit_user_fields(user_query)
     flow_bindings: dict[str, list[FlowBinding]] = {}
     unresolved: list[UnresolvedBinding] = []
-    if "send_money" in initial_function_trajectory and "read_file" in initial_function_trajectory:
-        if "get_iban" in initial_function_trajectory:
-            _add_binding(global_contract, flow_bindings, "send_money.recipient", "get_iban.output.iban", "DELEGATED", "USER_PRIVATE", "recipient derived from delegated invoice creditor")
-        _add_binding(global_contract, flow_bindings, "send_money.amount", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE", "amount extracted from delegated invoice")
-        _add_binding(global_contract, flow_bindings, "send_money.subject", "read_file.output.invoice.subject", "DELEGATED", "USER_PRIVATE", "subject extracted from delegated invoice")
-        _add_binding(global_contract, flow_bindings, "send_money.date", "read_file.output.invoice.due_date", "DELEGATED", "SENSITIVE", "due date extracted from delegated invoice")
     for tool_name in initial_function_trajectory:
         tool = global_contract.tools.get(tool_name)
         if not tool or tool.tool_type != "ACTION":
@@ -64,22 +59,26 @@ def deterministic_task_flow_contract(
             sink = f"{tool_name}.{argument_name}"
             if sink in flow_bindings:
                 continue
-            unresolved.append(
-                UnresolvedBinding(
-                    sink=sink,
-                    required_constraints=list(argument_contract.flow_constraints),
-                    reason="No task-authorized provenance source was inferred by the deterministic fallback.",
+            explicit_value = explicit_fields.get(argument_name)
+            if explicit_value is not None:
+                _add_binding(
+                    global_contract,
+                    flow_bindings,
+                    sink,
+                    f"user.explicit.{argument_name}",
+                    "USER",
+                    argument_contract.C_max,
+                    "argument value was explicitly present in the original user query",
+                    endorsements=_explicit_endorsements(argument_contract.endorsements),
                 )
-            )
-            _add_binding(
-                global_contract,
-                flow_bindings,
-                sink,
-                f"user.explicit.{argument_name}",
-                argument_contract.I_min,
-                argument_contract.C_max,
-                "argument may be used only if runtime provenance records an exact user-explicit value",
-            )
+            else:
+                unresolved.append(
+                    UnresolvedBinding(
+                        sink=sink,
+                        required_constraints=list(argument_contract.flow_constraints),
+                        reason="No task-authorized provenance source was inferred by the deterministic fallback.",
+                    )
+                )
     contract = TaskFlowContract(
         task_contract_version=TASK_CONTRACT_VERSION,
         task_type=_task_type(initial_function_trajectory),
@@ -95,6 +94,49 @@ def deterministic_task_flow_contract(
     )
     task_flow_contract_from_json(contract.to_json(), global_contract)
     return contract
+
+
+def extract_explicit_user_fields(user_query: str) -> dict[str, Any]:
+    """Conservatively extract authority-bearing values explicitly present in the user query."""
+    fields: dict[str, Any] = {}
+    query = user_query.strip()
+    lower = query.lower()
+    amount_match = re.search(r"(?i)(?:[$€£]\s*\d+(?:\.\d+)?|\b\d+(?:\.\d+)?\s*(?:dollars?|usd|eur|euros?|pounds?|gbp)\b)", query)
+    if amount_match:
+        number = re.search(r"\d+(?:\.\d+)?", amount_match.group(0))
+        fields["amount"] = number.group(0) if number else amount_match.group(0).strip()
+    date_match = re.search(
+        r"(?i)\b(?:today|tomorrow|tonight|next\s+\w+|\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}/\d{2,4}|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b(?:\s+\d{1,2}(?:st|nd|rd|th)?)?",
+        query,
+    )
+    if date_match:
+        fields["date"] = date_match.group(0).strip()
+    recipient_match = re.search(r"\b(?:[Pp]ay|[Ss]end|[Tt]ransfer)\s+(?:money\s+)?(?:to\s+)?([A-Z][A-Za-z0-9_.@-]*(?:\s+[A-Z][A-Za-z0-9_.@-]*){0,3})", query)
+    if recipient_match:
+        candidate = recipient_match.group(1).strip()
+        candidate = re.sub(r"\s+\d.*$", "", candidate).strip()
+        if candidate:
+            fields["recipient"] = candidate
+            fields["to"] = candidate
+    quoted = re.search(r"['\"]([^'\"]+)['\"]", query)
+    if quoted:
+        fields["subject"] = quoted.group(1)
+        fields["body"] = quoted.group(1)
+        fields["content"] = quoted.group(1)
+    channel_match = re.search(r"(?i)\b(?:channel|room)\s+([#@]?[A-Za-z0-9_.-]+)", query)
+    if channel_match:
+        fields["channel"] = channel_match.group(1)
+    file_id_match = re.search(r"(?i)\b(?:file[_\s-]?id)\s*[:=]?\s*([A-Za-z0-9_.-]+)", query)
+    if file_id_match:
+        fields["file_id"] = file_id_match.group(1)
+    url_match = re.search(r"https?://\S+", query)
+    if url_match:
+        fields["url"] = url_match.group(0).rstrip(".,)")
+    if "participants" in lower or "attendees" in lower:
+        participants = re.findall(r"\b[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?\b", query)
+        if participants:
+            fields["participants"] = participants
+    return fields
 
 
 def summarize_task_flow_contract(contract: TaskFlowContract | None) -> dict[str, Any]:
@@ -155,6 +197,7 @@ def _add_binding(
     i_after: str,
     c_label: str,
     reason: str,
+    endorsements: list[str] | None = None,
 ) -> None:
     tool_name, argument_name = sink.split(".", 1)
     argument_contract = global_contract.tools[tool_name].args[argument_name]
@@ -165,11 +208,16 @@ def _add_binding(
             I_after=i_after,
             C_label=c_label,
             satisfies=list(argument_contract.flow_constraints),
-            endorsements=list(argument_contract.endorsements),
+            endorsements=list(endorsements) if endorsements is not None else list(argument_contract.endorsements),
             declassifications=[],
             reason=reason,
         )
     )
+
+
+def _explicit_endorsements(global_endorsements: list[str]) -> list[str]:
+    evidence = ["user_explicit", "exact_match_to_authorized_source"]
+    return [endorsement for endorsement in evidence if endorsement in global_endorsements]
 
 
 def _source_delegations(flow_bindings: dict[str, list[FlowBinding]]) -> list[dict[str, Any]]:

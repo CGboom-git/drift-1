@@ -20,6 +20,7 @@ def _global():
     return generate_ifc_global_contract(
         [
             _schema("send_money", {"recipient": _arg(), "amount": {"type": "number"}, "subject": _arg(), "date": _arg()}),
+            _schema("send_email", {"to": _arg(), "subject": _arg(), "body": _arg()}),
             _schema("create_file", {"filename": _arg(), "content": _arg()}),
             _schema("post_webpage", {"url": _arg(), "content": _arg()}),
         ],
@@ -43,7 +44,7 @@ def _task(global_contract, *bindings: FlowBinding):
     )
 
 
-def _binding(global_contract, sink: str, source_path: str, i_label: str, c_label: str, declassifications: list[str] | None = None) -> FlowBinding:
+def _binding(global_contract, sink: str, source_path: str, i_label: str, c_label: str, endorsements: list[str] | None = None, declassifications: list[str] | None = None) -> FlowBinding:
     tool, arg = sink.split(".", 1)
     global_arg = global_contract.tools[tool].args[arg]
     return FlowBinding(
@@ -52,7 +53,7 @@ def _binding(global_contract, sink: str, source_path: str, i_label: str, c_label
         I_after=i_label,
         C_label=c_label,
         satisfies=list(global_arg.flow_constraints),
-        endorsements=list(global_arg.endorsements),
+        endorsements=endorsements or [],
         declassifications=declassifications or [],
         reason="test binding",
     )
@@ -70,8 +71,9 @@ def _state(record: IFCProvenanceRecord) -> IFCProvenanceState:
 
 def test_invoice_amount_to_send_money_amount_is_allowed() -> None:
     global_contract = _global()
-    task = _task(global_contract, _binding(global_contract, "send_money.amount", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE"))
-    state = _state(IFCProvenanceRecord("50.0", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE"))
+    endorsements = ["task_delegation", "structured_extraction", "schema_validated_parse", "exact_match_to_authorized_source"]
+    task = _task(global_contract, _binding(global_contract, "send_money.amount", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE", endorsements=endorsements))
+    state = _state(IFCProvenanceRecord("50.0", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE", transformations=endorsements))
     allowed, events = validate_tool_call_arguments_ifc(_call("send_money", amount="50.0"), global_contract, task, state)
     assert allowed
     assert events[0]["reason"] == "authorized_flow"
@@ -97,8 +99,9 @@ def test_injected_instruction_to_send_money_recipient_is_rejected() -> None:
 
 def test_user_private_to_create_file_content_is_allowed() -> None:
     global_contract = _global()
-    task = _task(global_contract, _binding(global_contract, "create_file.content", "user.explicit.content", "USER", "USER_PRIVATE"))
-    state = _state(IFCProvenanceRecord("hello", "user.explicit.content", "USER", "USER_PRIVATE"))
+    endorsements = ["user_explicit", "exact_match_to_authorized_source"]
+    task = _task(global_contract, _binding(global_contract, "create_file.content", "user.explicit.content", "USER", "USER_PRIVATE", endorsements=endorsements))
+    state = _state(IFCProvenanceRecord("hello", "user.explicit.content", "USER", "USER_PRIVATE", transformations=endorsements))
     allowed, _ = validate_tool_call_arguments_ifc(_call("create_file", content="hello"), global_contract, task, state)
     assert allowed
 
@@ -137,3 +140,87 @@ def test_confidentiality_label_above_max_without_declassification_is_rejected() 
     allowed, events = validate_tool_call_arguments_ifc(_call("create_file", content="secret"), global_contract, task, state)
     assert not allowed
     assert "confidentiality_label_exceeds_allowed_maximum" in events[0]["reason"]
+
+
+def test_confidentiality_declassification_requires_runtime_evidence() -> None:
+    global_contract = _global()
+    task = _task(
+        global_contract,
+        _binding(
+            global_contract,
+            "send_email.body",
+            "read_file.output.invoice.summary",
+            "TOOL_OUTPUT",
+            "SENSITIVE",
+            declassifications=["schema_validated_export"],
+        ),
+    )
+    state = _state(IFCProvenanceRecord("summary", "read_file.output.invoice.summary", "TOOL_OUTPUT", "SENSITIVE"))
+    allowed, events = validate_tool_call_arguments_ifc(_call("send_email", body="summary"), global_contract, task, state)
+    assert not allowed
+    assert "declassification_evidence_missing" in events[0]["reason"]
+
+
+def test_confidentiality_declassification_must_be_allowed_by_global_contract() -> None:
+    global_contract = _global()
+    task = _task(
+        global_contract,
+        _binding(
+            global_contract,
+            "post_webpage.content",
+            "user.explicit.content",
+            "TOOL_OUTPUT",
+            "USER_PRIVATE",
+            declassifications=["schema_validated_export"],
+        ),
+    )
+    state = _state(
+        IFCProvenanceRecord(
+            "private",
+            "user.explicit.content",
+            "TOOL_OUTPUT",
+            "USER_PRIVATE",
+            metadata={"declassifications": ["schema_validated_export"]},
+        )
+    )
+    allowed, events = validate_tool_call_arguments_ifc(_call("post_webpage", content="private"), global_contract, task, state)
+    assert not allowed
+    assert "declassification_not_allowed_by_global_contract" in events[0]["reason"]
+
+
+def test_structured_extraction_endorsement_requires_runtime_evidence() -> None:
+    global_contract = _global()
+    task = _task(
+        global_contract,
+        _binding(
+            global_contract,
+            "send_money.amount",
+            "read_file.output.invoice.amount",
+            "DELEGATED",
+            "SENSITIVE",
+            endorsements=["structured_extraction"],
+        ),
+    )
+    state = _state(IFCProvenanceRecord("50.0", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE", transformations=[]))
+    allowed, events = validate_tool_call_arguments_ifc(_call("send_money", amount="50.0"), global_contract, task, state)
+    assert not allowed
+    assert "endorsement_evidence_missing" in events[0]["reason"]
+
+
+def test_trusted_tool_derivation_endorsement_requires_runtime_evidence() -> None:
+    global_contract = _global()
+    task = _task(
+        global_contract,
+        _binding(
+            global_contract,
+            "send_money.recipient",
+            "get_iban.output.iban",
+            "DELEGATED",
+            "USER_PRIVATE",
+            endorsements=["trusted_tool_derivation"],
+        ),
+    )
+    state = _state(IFCProvenanceRecord("DE89", "get_iban.output.iban", "DELEGATED", "USER_PRIVATE", transformations=[]))
+    allowed, events = validate_tool_call_arguments_ifc(_call("send_money", recipient="DE89"), global_contract, task, state)
+    assert not allowed
+    assert "endorsement_evidence_missing" in events[0]["reason"]

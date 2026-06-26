@@ -7,6 +7,8 @@ from pact_drift.ifc_contract_schema import IFCGlobalContract, load_ifc_global_co
 DEFAULT_IFC_GLOBAL_CONTRACT_CANDIDATES = (
     "contract/agentdojo_ifc_global_tool_contract_semantic_review_gpt55.json",
     "contracts/agentdojo_ifc_global_tool_contract_semantic_review_gpt55.json",
+    "contract/agentdojo_ifc_global_tool_contract_draft.json",
+    "contracts/agentdojo_ifc_global_tool_contract_draft.json",
 )
 
 
@@ -16,10 +18,7 @@ def resolve_ifc_global_contract_path(configured_path: str | None = None) -> str:
     for candidate in candidates:
         if candidate and Path(candidate).exists():
             return candidate
-    raise FileNotFoundError(
-        "Could not find an IFC global contract. Tried: "
-        + ", ".join(candidate for candidate in candidates if candidate)
-    )
+    raise FileNotFoundError("IFC global contract not found. Please provide --ifc_global_contract_path.")
 
 
 def load_default_ifc_global_contract(configured_path: str | None = None) -> tuple[IFCGlobalContract, str]:

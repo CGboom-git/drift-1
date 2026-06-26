@@ -48,7 +48,7 @@ def _task(global_contract):
                     I_after="DELEGATED",
                     C_label="SENSITIVE",
                     satisfies=list(arg.flow_constraints),
-                    endorsements=list(arg.endorsements),
+                    endorsements=[],
                     declassifications=[],
                     reason="test",
                 )

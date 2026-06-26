@@ -57,9 +57,9 @@ class OpenAIModel():
                 message["content"] = message["content"] + f"\n\n<environment_setup>\n\n{ENVIRONMENT_GUIDELINES}\n\n</environment_setup>" 
 
                 # insert trajectory plan
-                if initial_trajectory:
+                if initial_trajectory is not None:
                     if use_ifc_execution_guidelines:
-                        message["content"] = message["content"] + IFC_EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, task_flow_contract_summary=task_flow_contract_summary, achieved_trajectory=achieved_trajectory, query=query)
+                        message["content"] = message["content"] + IFC_EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, task_flow_contract_summary=task_flow_contract_summary or "{}", achieved_trajectory=achieved_trajectory, query=query)
                     else:
                         message["content"] = message["content"] + EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, node_checklist=node_checklist, achieved_trajectory=achieved_trajectory, query=query)
 
@@ -193,9 +193,9 @@ class OpenRouterModel():
                 message["content"] = message["content"] + f"\n\n<environment_setup>\n\n{ENVIRONMENT_GUIDELINES}\n\n</environment_setup>" 
 
                 # insert trajectory plan
-                if initial_trajectory:
+                if initial_trajectory is not None:
                     if use_ifc_execution_guidelines:
-                        message["content"] = message["content"] + IFC_EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, task_flow_contract_summary=task_flow_contract_summary, achieved_trajectory=achieved_trajectory, query=query)
+                        message["content"] = message["content"] + IFC_EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, task_flow_contract_summary=task_flow_contract_summary or "{}", achieved_trajectory=achieved_trajectory, query=query)
                     else:
                         message["content"] = message["content"] + EXECUTION_GUIDELINES_PROMPT.format(initial_trajectory=initial_trajectory, node_checklist=node_checklist, achieved_trajectory=achieved_trajectory, query=query)
 
@@ -357,11 +357,11 @@ class GoogleModel():
             str_tools = json.dumps(tools)
             if "<avaliable_tools>" not in sys_instr:
                 sys_instr += f"\n\n<avaliable_tools>\n\n{str_tools}\n\n</avaliable_tools>"
-        if sys_instr and kwargs.get("initial_trajectory"):
+        if sys_instr and kwargs.get("initial_trajectory") is not None:
             if kwargs.get("use_ifc_execution_guidelines"):
                 sys_instr += IFC_EXECUTION_GUIDELINES_PROMPT.format(
                     initial_trajectory=kwargs.get("initial_trajectory"),
-                    task_flow_contract_summary=kwargs.get("task_flow_contract_summary"),
+                    task_flow_contract_summary=kwargs.get("task_flow_contract_summary") or "{}",
                     achieved_trajectory=kwargs.get("achieved_trajectory"),
                     query=kwargs.get("query"),
                 )

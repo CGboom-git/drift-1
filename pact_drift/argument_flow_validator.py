@@ -56,9 +56,16 @@ def validate_single_argument_flow(
         reasons.append("integrity_label_below_required_minimum")
         violation_types.append("integrity")
     if not confidentiality_at_most(candidate.C_label, global_argument.C_max):
-        if not (matched_binding and matched_binding.declassifications):
+        required_declassifications = set(matched_binding.declassifications) if matched_binding else set()
+        actual_declassifications = set(candidate.metadata.get("declassifications", []))
+        allowed_declassifications = set(global_argument.declassifications)
+        if not required_declassifications:
             reasons.append("confidentiality_label_exceeds_allowed_maximum")
-            violation_types.append("confidentiality")
+        elif not required_declassifications.issubset(allowed_declassifications):
+            reasons.append("declassification_not_allowed_by_global_contract")
+        elif not required_declassifications.issubset(actual_declassifications):
+            reasons.append("declassification_evidence_missing")
+        violation_types.append("confidentiality")
     forbidden = set(candidate.marks) & set(global_argument.deny_marks)
     if forbidden:
         reasons.append(f"forbidden_marks:{','.join(sorted(forbidden))}")
@@ -66,6 +73,10 @@ def validate_single_argument_flow(
         missing_constraints = set(global_argument.flow_constraints) - set(matched_binding.satisfies)
         if missing_constraints:
             reasons.append(f"missing_required_flow_constraints:{','.join(sorted(missing_constraints))}")
+        required_endorsements = set(matched_binding.endorsements)
+        actual_transformations = set(candidate.transformations)
+        if not required_endorsements.issubset(actual_transformations):
+            reasons.append("endorsement_evidence_missing")
     required_constraints = list(global_argument.flow_constraints)
     allowed = not reasons
     return {
@@ -79,6 +90,10 @@ def validate_single_argument_flow(
         "resolved_provenance": candidate.to_json(),
         "required_constraints": required_constraints,
         "allowed_paths": allowed_paths,
+        "required_endorsements": sorted(matched_binding.endorsements) if matched_binding else [],
+        "actual_transformations": sorted(candidate.transformations),
+        "required_declassifications": sorted(matched_binding.declassifications) if matched_binding else [],
+        "actual_declassifications": sorted(candidate.metadata.get("declassifications", [])),
     }
 
 

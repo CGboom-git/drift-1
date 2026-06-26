@@ -55,7 +55,7 @@ def get_args(description='DRIFT'):
     parser.add_argument("--enable_ifc_drift", action="store_true", help="Enable IFC-DRIFT task flow and argument-flow validation.")
     parser.add_argument("--ifc_global_contract_path", type=str, default=None, help="Path to the reviewed IFC global contract.")
     parser.add_argument("--ifc_task_contract_model", type=str, default=None, help="Optional model label used for IFC task-flow contract generation.")
-    parser.add_argument("--ifc_disable_legacy_checklist", action="store_true", default=None, help="Disable legacy DRIFT checklist validation when IFC-DRIFT is enabled.")
+    parser.add_argument("--ifc_disable_legacy_checklist", action="store_true", help="Disable legacy DRIFT checklist validation when IFC-DRIFT is enabled.")
     parser.add_argument("--ifc_debug", action="store_true", help="Emit IFC-DRIFT debug logs.")
     parser.add_argument("--ifc_allow_action_replan", action="store_true", help="Allow out-of-trajectory ACTION calls to request a secure replan instead of hard rejection.")
 
@@ -64,7 +64,7 @@ def get_args(description='DRIFT'):
 
 
     args = parser.parse_args()
-    if args.ifc_disable_legacy_checklist is None:
-        args.ifc_disable_legacy_checklist = bool(args.enable_ifc_drift)
+    if args.enable_ifc_drift:
+        args.ifc_disable_legacy_checklist = True
 
     return args

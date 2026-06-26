@@ -5,6 +5,7 @@ from pact_drift.task_flow_contract import (
     TASK_CONTRACT_VERSION,
     validate_task_flow_contract_schema,
 )
+from pact_drift.task_flow_contract_generator import deterministic_task_flow_contract, extract_explicit_user_fields
 
 
 def _schema(name: str, properties: dict[str, dict], description: str = "") -> dict:
@@ -17,7 +18,7 @@ def _arg(description: str = "") -> dict:
 
 def _global():
     return generate_ifc_global_contract(
-        [_schema("send_money", {"amount": {"type": "number"}, "recipient": _arg()})],
+        [_schema("send_money", {"amount": {"type": "number"}, "recipient": _arg(), "date": _arg()})],
         "agentdojo",
         {"name": "agentdojo", "version": "v1"},
     )
@@ -86,6 +87,27 @@ def test_task_flow_contract_rejects_declassifications_outside_global_sink() -> N
     data = _contract()
     data["flow_bindings"]["send_money.amount"][0]["declassifications"].append("destination_scope_match")
     _expect_value_error(lambda: validate_task_flow_contract_schema(data, _global()))
+
+
+def test_explicit_user_field_extractor_is_conservative() -> None:
+    fields = extract_explicit_user_fields("Pay the bill in invoice.txt.")
+    assert "amount" not in fields
+    assert "recipient" not in fields
+    assert "date" not in fields
+
+
+def test_deterministic_fallback_does_not_invent_user_explicit_amount() -> None:
+    contract = deterministic_task_flow_contract("Pay the bill in invoice.txt.", ["send_money"], _global())
+    assert "send_money.amount" not in contract.flow_bindings
+    assert "send_money.amount" in {binding.sink for binding in contract.unresolved_bindings}
+
+
+def test_deterministic_fallback_allows_only_explicit_query_fields() -> None:
+    contract = deterministic_task_flow_contract("Pay Alice 50 dollars tomorrow.", ["send_money"], _global())
+    assert contract.allowed_paths_for_sink("send_money.recipient") == ["user.explicit.recipient"]
+    assert contract.allowed_paths_for_sink("send_money.amount") == ["user.explicit.amount"]
+    assert contract.allowed_paths_for_sink("send_money.date") == ["user.explicit.date"]
+    assert "send_money.amount" not in {binding.sink for binding in contract.unresolved_bindings}
 
 
 def _expect_value_error(callback) -> None:

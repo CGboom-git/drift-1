@@ -882,6 +882,7 @@ class DRIFTLLM(PromptingLLM):
 
                 if self.args.enable_ifc_drift:
                     from pact_drift.task_flow_contract_generator import generate_task_flow_contract
+                    from pact_drift.ifc_provenance import record_user_explicit_fields_ifc
 
                     self.initial_ifc_trajectory_build(completion)
                     self.task_flow_contract = generate_task_flow_contract(
@@ -892,6 +893,7 @@ class DRIFTLLM(PromptingLLM):
                         client=self.client,
                         model=self.args.ifc_task_contract_model or self.model,
                     )
+                    record_user_explicit_fields_ifc(query, self.task_flow_contract, self.ifc_provenance_state)
                     if self.args.ifc_debug:
                         self.logger.info(f"IFC-DRIFT task flow contract: {self.task_flow_contract.to_json()}")
                 else:
