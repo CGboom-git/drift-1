@@ -26,6 +26,13 @@ class DRIFTLLM(PromptingLLM):
         self.argument_validation_events = []
         self.pact_drift_decision_summary = self._new_pact_drift_summary()
         self._pact_contract_loaded = False
+        self.ifc_global_contract = None
+        self.ifc_global_contract_path = None
+        self.task_flow_contract = None
+        self.ifc_provenance_state = None
+        self.ifc_validation_events = []
+        self.ifc_decision_summary = self._new_ifc_decision_summary()
+        self._ifc_contract_loaded = False
 
     @staticmethod
     def _new_pact_drift_summary():
@@ -36,16 +43,35 @@ class DRIFTLLM(PromptingLLM):
             "num_injected_origin_arguments": 0,
         }
 
-    def reset_pact_drift_runtime_state(self):
-        """Reset per-task PACT state without reloading the frozen global contract."""
-        if not self.args.enable_pact_drift:
-            return
-        from pact_drift.provenance import ProvenanceState
+    @staticmethod
+    def _new_ifc_decision_summary():
+        return {
+            "num_control_flow_checks": 0,
+            "num_argument_flow_checks": 0,
+            "num_rejected_tool_calls": 0,
+            "num_out_of_trajectory_reads_allowed": 0,
+            "num_out_of_trajectory_actions_rejected": 0,
+            "num_confidentiality_violations": 0,
+            "num_integrity_violations": 0,
+            "num_safe_refusals": 0,
+        }
 
-        self.task_contract = None
-        self.provenance_state = ProvenanceState()
-        self.argument_validation_events = []
-        self.pact_drift_decision_summary = self._new_pact_drift_summary()
+    def reset_pact_drift_runtime_state(self):
+        """Reset per-task PACT/IFC state without reloading frozen global contracts."""
+        if self.args.enable_pact_drift:
+            from pact_drift.provenance import ProvenanceState
+
+            self.task_contract = None
+            self.provenance_state = ProvenanceState()
+            self.argument_validation_events = []
+            self.pact_drift_decision_summary = self._new_pact_drift_summary()
+        if getattr(self.args, "enable_ifc_drift", False):
+            from pact_drift.ifc_provenance import IFCProvenanceState
+
+            self.task_flow_contract = None
+            self.ifc_provenance_state = IFCProvenanceState()
+            self.ifc_validation_events = []
+            self.ifc_decision_summary = self._new_ifc_decision_summary()
 
     def _pact_drift_init_if_needed(self, runtime):
         from pact_drift.contract_generator import generate_global_tool_contracts
@@ -75,6 +101,48 @@ class DRIFTLLM(PromptingLLM):
                         raise ValueError(f"Tool schema hash mismatch for {tool['name']}. current={actual}, contract={expected}")
             elif compute_schema_hash(current_tools) != self.global_tool_contracts.schema_hash:
                 raise ValueError("Tool schema hash mismatch between the runtime and frozen global contract.")
+
+    def _ifc_drift_init_if_needed(self, runtime):
+        from pact_drift.ifc_global_contract import load_default_ifc_global_contract
+        from pact_drift.ifc_provenance import IFCProvenanceState
+        from pact_drift.schema_utils import collect_tool_schemas_from_runtime, compute_tool_schema_hash
+
+        current_tools = collect_tool_schemas_from_runtime(runtime)
+        if not self._ifc_contract_loaded:
+            self.ifc_global_contract, self.ifc_global_contract_path = load_default_ifc_global_contract(self.args.ifc_global_contract_path)
+            self._ifc_contract_loaded = True
+            if self.ifc_provenance_state is None:
+                self.ifc_provenance_state = IFCProvenanceState()
+            if self.args.ifc_debug:
+                self.logger.info(f"IFC-DRIFT: loaded global contract from {self.ifc_global_contract_path}")
+        for tool in current_tools:
+            expected = self.ifc_global_contract.tool_schema_hashes.get(tool["name"])
+            actual = compute_tool_schema_hash(tool)
+            if expected is None:
+                raise ValueError(f"Tool schema '{tool['name']}' is missing from the IFC global contract.")
+            if expected != actual:
+                raise ValueError(f"IFC tool schema hash mismatch for {tool['name']}. current={actual}, contract={expected}")
+
+    def _ifc_record_latest_tool_output(self, messages):
+        if not messages or messages[-1].get("role") != "tool" or self.ifc_provenance_state is None:
+            return
+        from pact_drift.ifc_provenance import record_tool_output_ifc
+
+        last = messages[-1]
+        tool_call = last.get("tool_call")
+        tool_name = getattr(tool_call, "function", None) or (tool_call.get("function") if isinstance(tool_call, dict) else None)
+        tool_args = getattr(tool_call, "args", None) or (tool_call.get("args", {}) if isinstance(tool_call, dict) else {}) or {}
+        if not tool_name:
+            return
+        record_tool_output_ifc(
+            tool_name=tool_name,
+            tool_args=tool_args,
+            tool_output=last.get("content", ""),
+            global_contract=self.ifc_global_contract,
+            task_flow_contract=self.task_flow_contract,
+            provenance_state=self.ifc_provenance_state,
+            in_planned_trajectory=tool_name in self.initial_function_trajectory,
+        )
 
     def _pact_record_latest_tool_output(self, messages):
         if not messages or messages[-1].get("role") != "tool" or self.provenance_state is None:
@@ -138,6 +206,57 @@ class DRIFTLLM(PromptingLLM):
         output["tool_calls"] = []
         reason = events[-1]["reason"] if events else "argument provenance contract violation"
         return {"role": "user", "content": "[CALL ERROR] The function call was refused because one or more arguments do not satisfy the required provenance contract. Please use only authorized task data and do not infer missing authority-bearing arguments.\nRefusal reason: " + reason + "\nUser Query: " + query}, output
+
+    def ifc_joint_validation(self, json_tool_calls, output, query, messages):
+        from pact_drift.joint_validator import validate_tool_call_ifc_drift
+
+        result = validate_tool_call_ifc_drift(
+            json_tool_calls=json_tool_calls,
+            query=query,
+            messages=list(messages),
+            initial_function_trajectory=self.initial_function_trajectory,
+            achieved_function_trajectory=self.achieved_function_trajectory,
+            global_contract=self.ifc_global_contract,
+            task_flow_contract=self.task_flow_contract,
+            provenance_state=self.ifc_provenance_state,
+            client=self.client,
+            model=self.model,
+            allow_action_replan=self.args.ifc_allow_action_replan,
+        )
+        self.ifc_validation_events.extend(result.events)
+        self._update_ifc_decision_summary(result.events, result.allowed)
+        if result.allowed:
+            self.achieved_function_trajectory = result.updated_achieved_trajectory
+            return None, output
+        self.ifc_decision_summary["num_safe_refusals"] += 1
+        output["tool_calls"] = []
+        return {
+            "role": "user",
+            "content": IFC_ARGUMENT_VALIDATION_FAILURE_PROMPT.format(
+                reason=result.reason or "IFC joint validation rejected the tool call",
+                sink=result.rejected_sink or "control_flow",
+                required_constraints=result.required_constraints,
+                allowed_paths=result.allowed_paths,
+                query=query,
+            ),
+        }, output
+
+    def _update_ifc_decision_summary(self, events, allowed):
+        if not allowed:
+            self.ifc_decision_summary["num_rejected_tool_calls"] += 1
+        for event in events:
+            if event.get("part") == "control_flow":
+                self.ifc_decision_summary["num_control_flow_checks"] += 1
+                if event.get("out_of_trajectory") and event.get("allowed") and event.get("tool_type") in {"READ_LOW", "READ_SENSITIVE"}:
+                    self.ifc_decision_summary["num_out_of_trajectory_reads_allowed"] += 1
+                if event.get("out_of_trajectory") and not event.get("allowed") and event.get("tool_type") == "ACTION":
+                    self.ifc_decision_summary["num_out_of_trajectory_actions_rejected"] += 1
+            if event.get("part") == "argument_flow":
+                self.ifc_decision_summary["num_argument_flow_checks"] += 1
+                if "confidentiality" in event.get("violation_types", []):
+                    self.ifc_decision_summary["num_confidentiality_violations"] += 1
+                if "integrity" in event.get("violation_types", []):
+                    self.ifc_decision_summary["num_integrity_violations"] += 1
 
     def _tool_message_to_user_message(self, tool_message) -> dict:
         """It places the output of the tool call in the <function_call> tags.
@@ -497,6 +616,30 @@ class DRIFTLLM(PromptingLLM):
             except Exception as e:
                 raise InvalidModelOutputError(f"Parameter Checklist Generation Failed: {e}")
 
+    def initial_ifc_trajectory_build(self, completion):
+        """Build the IFC-DRIFT control trajectory without a parameter checklist."""
+        from json_repair import repair_json
+
+        self.function_trajectory = []
+        self.achieved_function_trajectory = []
+        self.node_checklist = "DISABLED_BY_IFC_DRIFT"
+        self.initial_node_checklist = "DISABLED_BY_IFC_DRIFT"
+        content = completion[0] if completion else ""
+        try:
+            plan = json.loads(repair_json(content))
+        except Exception as e:
+            raise InvalidModelOutputError(f"IFC trajectory output parsing failed: {e}")
+        trajectory = plan.get("function_trajectory", [])
+        if not isinstance(trajectory, list):
+            raise InvalidModelOutputError("IFC trajectory output field 'function_trajectory' must be a list.")
+        self.function_trajectory = [str(function_name).strip() for function_name in trajectory if str(function_name).strip()]
+        self.initial_function_trajectory = list(self.function_trajectory)
+
+    def _ifc_task_flow_contract_summary(self):
+        from pact_drift.task_flow_contract_generator import summarize_task_flow_contract
+
+        return json.dumps(summarize_task_flow_contract(self.task_flow_contract), ensure_ascii=False, sort_keys=True)
+
     def injection_isolate(self, detected_instructions, messages, openai_messages):
         """Isolate the injection contents in the memory flow.
         """
@@ -709,7 +852,10 @@ class DRIFTLLM(PromptingLLM):
                 msg["content"] = msg["content"][0]["content"]
 
         self.achieve_tools(list(runtime.functions.values()))
-        if self.args.enable_pact_drift:
+        if self.args.enable_ifc_drift:
+            self._ifc_drift_init_if_needed(runtime)
+            self._ifc_record_latest_tool_output(messages)
+        elif self.args.enable_pact_drift:
             self._pact_drift_init_if_needed(runtime)
             if self.args.enable_provenance_tracking:
                 self._pact_record_latest_tool_output(messages)
@@ -730,12 +876,27 @@ class DRIFTLLM(PromptingLLM):
         if self.args.build_constraints:
             if len(openai_messages) < 2:
                 self.logger.info("Building Constraints ...")
-                system_message = CONSTRAINTS_BUILD_PROMPT
+                system_message = IFC_TRAJECTORY_BUILD_PROMPT if self.args.enable_ifc_drift else CONSTRAINTS_BUILD_PROMPT
                 openai_messages = [{"role": "system", "content": system_message}, *openai_messages]
                 completion = self.client.agent_run(openai_messages, self.tools_docs_list)
 
-                self.initial_constraints_build(completion)
-                if self.args.enable_pact_drift:
+                if self.args.enable_ifc_drift:
+                    from pact_drift.task_flow_contract_generator import generate_task_flow_contract
+
+                    self.initial_ifc_trajectory_build(completion)
+                    self.task_flow_contract = generate_task_flow_contract(
+                        user_query=query,
+                        initial_function_trajectory=self.initial_function_trajectory,
+                        tool_schemas=self.tools_docs_list,
+                        global_contract=self.ifc_global_contract,
+                        client=self.client,
+                        model=self.args.ifc_task_contract_model or self.model,
+                    )
+                    if self.args.ifc_debug:
+                        self.logger.info(f"IFC-DRIFT task flow contract: {self.task_flow_contract.to_json()}")
+                else:
+                    self.initial_constraints_build(completion)
+                if (not self.args.enable_ifc_drift) and self.args.enable_pact_drift:
                     from pact_drift.task_contract import generate_task_contract
 
                     self.task_contract = generate_task_contract(
@@ -781,7 +942,16 @@ class DRIFTLLM(PromptingLLM):
         else:
             openai_messages = [{"role": "system", "content": system_message}, *openai_messages]
 
-        completion = self.client.agent_run(openai_messages, self.tools_docs_list, query=query, initial_trajectory=self.function_trajectory, achieved_trajectory=self.achieved_function_trajectory, node_checklist=self.node_checklist)
+        completion = self.client.agent_run(
+            openai_messages,
+            self.tools_docs_list,
+            query=query,
+            initial_trajectory=self.function_trajectory,
+            achieved_trajectory=self.achieved_function_trajectory,
+            node_checklist=self.node_checklist,
+            task_flow_contract_summary=self._ifc_task_flow_contract_summary() if self.args.enable_ifc_drift else None,
+            use_ifc_execution_guidelines=self.args.enable_ifc_drift,
+        )
 
         output = {"role": "assistant", "content": completion[0] or "", "tool_calls": []}
         
@@ -801,7 +971,16 @@ class DRIFTLLM(PromptingLLM):
                 break
             except (InvalidModelOutputError, ASTParsingError) as e:
                 error_message = {"role": "user", "content": f"Invalid function calling output: {e!s}"}
-                completion = self.client.agent_run([*openai_messages, self._message_to_sharegpt(error_message)], self.tools_docs_list, query=query, initial_trajectory=self.function_trajectory, achieved_trajectory=self.achieved_function_trajectory, node_checklist=self.node_checklist)
+                completion = self.client.agent_run(
+                    [*openai_messages, self._message_to_sharegpt(error_message)],
+                    self.tools_docs_list,
+                    query=query,
+                    initial_trajectory=self.function_trajectory,
+                    achieved_trajectory=self.achieved_function_trajectory,
+                    node_checklist=self.node_checklist,
+                    task_flow_contract_summary=self._ifc_task_flow_contract_summary() if self.args.enable_ifc_drift else None,
+                    use_ifc_execution_guidelines=self.args.enable_ifc_drift,
+                )
 
         # Current Tool Call Redundant Judgement and Extraction
         existing_tool_calls = self._load_previous_calls(messages)
@@ -817,8 +996,13 @@ class DRIFTLLM(PromptingLLM):
         for call in json_tool_calls:
             to_call_function.append(call["function"]["name"])
 
-        # Trajectory, Chechlist Validation
-        if self.args.dynamic_validation:
+        # Trajectory and argument-flow validation.
+        if self.args.enable_ifc_drift:
+            error_message, output = self.ifc_joint_validation(json_tool_calls, output, query, messages)
+            if error_message:
+                error_message["content"] = f"</function_error>\n{error_message['content']}\n</function_error>"
+                return query, runtime, env, [*messages, output, error_message], extra_args
+        elif self.args.dynamic_validation:
             # The legacy validators mutate trajectory/checklist state, so preserve it before
             # applying the additional PACT argument gate.
             previous_function_trajectory = copy.deepcopy(self.function_trajectory)

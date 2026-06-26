@@ -18,7 +18,7 @@ CONFIDENTIALITY_LATTICE = ["PUBLIC", "INTERNAL", "USER_PRIVATE", "SENSITIVE", "S
 SINK_ROLES = ["target", "command", "credential", "content", "selector", "control"]
 TOOL_TYPES = ["READ_LOW", "READ_SENSITIVE", "ACTION"]
 CHECK_MODES = ["track_only", "control_check_and_track", "full"]
-SINK_SCOPES = ["none", "internal", "external", "public", "financial", "messaging", "calendar", "workspace", "credential"]
+SINK_SCOPES = ["none", "internal", "external", "public", "financial", "messaging", "calendar", "workspace", "credential", "booking"]
 DENY_MARK_TYPES = [
     "model_inferred_unverified",
     "injected_instruction",
@@ -122,6 +122,7 @@ class IFCGlobalContract:
     adapter: dict[str, Any]
     tool_schema_hashes: dict[str, str]
     tools: dict[str, IFCToolContract]
+    sink_scope_types: list[str] = field(default_factory=lambda: list(SINK_SCOPES))
 
 
 def ifc_to_jsonable(obj: Any) -> Any:
@@ -154,6 +155,7 @@ def load_ifc_global_contract(path: str) -> IFCGlobalContract:
         integrity_lattice=list(data["integrity_lattice"]),
         confidentiality_lattice=list(data["confidentiality_lattice"]),
         sink_roles=list(data["sink_roles"]),
+        sink_scope_types=list(data.get("sink_scope_types", SINK_SCOPES)),
         deny_mark_types=list(data["deny_mark_types"]),
         flow_constraint_types=list(data["flow_constraint_types"]),
         endorsement_types=list(data["endorsement_types"]),
@@ -201,6 +203,8 @@ def validate_ifc_global_contract_schema(data: dict[str, Any]) -> None:
         raise ValueError("IFC confidentiality lattice must match the fixed enum and order.")
     if data["sink_roles"] != SINK_ROLES:
         raise ValueError("IFC sink roles must match the fixed enum.")
+    if data.get("sink_scope_types", SINK_SCOPES) != SINK_SCOPES:
+        raise ValueError("IFC sink scopes must match the fixed enum.")
     if data["deny_mark_types"] != DENY_MARK_TYPES:
         raise ValueError("IFC deny marks must match the fixed enum.")
     if data["flow_constraint_types"] != FLOW_CONSTRAINT_TYPES:

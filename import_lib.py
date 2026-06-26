@@ -10,7 +10,14 @@ import warnings
 import logging
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-from prompts import CONSTRAINTS_BUILD_PROMPT, TOOL_CALLING_PROMPT, INJECTION_DETECTION_PROMPT, ADAPTIVE_ATTACK_PROMPT
+from prompts import (
+    ADAPTIVE_ATTACK_PROMPT,
+    CONSTRAINTS_BUILD_PROMPT,
+    IFC_ARGUMENT_VALIDATION_FAILURE_PROMPT,
+    IFC_TRAJECTORY_BUILD_PROMPT,
+    INJECTION_DETECTION_PROMPT,
+    TOOL_CALLING_PROMPT,
+)
 
 from agentdojo.logging import Logger
 from collections.abc import Sequence

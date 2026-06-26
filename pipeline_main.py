@@ -85,6 +85,25 @@ def main(args, suite_type):
             "pact_drift_decision_summary": llm.pact_drift_decision_summary,
         }
 
+    def ifc_result_fields():
+        if not args.enable_ifc_drift:
+            return {
+                "ifc_drift_enabled": False,
+                "ifc_global_contract_path": None,
+                "ifc_task_flow_contract": None,
+                "ifc_provenance_records": [],
+                "ifc_validation_events": [],
+                "ifc_decision_summary": None,
+            }
+        return {
+            "ifc_drift_enabled": True,
+            "ifc_global_contract_path": llm.ifc_global_contract_path,
+            "ifc_task_flow_contract": llm.task_flow_contract.to_json() if llm.task_flow_contract else None,
+            "ifc_provenance_records": llm.ifc_provenance_state.to_json() if llm.ifc_provenance_state else [],
+            "ifc_validation_events": llm.ifc_validation_events,
+            "ifc_decision_summary": llm.ifc_decision_summary,
+        }
+
     tools_loop = DRIFTToolsExecutionLoop(
         [
             ToolsExecutor(),
@@ -184,7 +203,7 @@ def main(args, suite_type):
                 utility_result.append(utility)
                 security_result.append(security)
                 with open(result_file_path, "w") as f:
-                    json.dump({"suite_name": suite_type, "pipeline_name": f"{args.model}", "user_task_id": f"user_task_{user_task_idx}", "injection_task_id": f"injection_task_{injection_task_idx}", "attack_type": f"{attacker}", "build_constraints": args.build_constraints, "injection_isolation": args.injection_isolation, "dynamic_validation": args.dynamic_validation, "adaptive_attack": args.adaptive_attack, "tool_permission": llm.tool_permissions, "initial_trajectory": llm.initial_function_trajectory, "initial_checklist": llm.initial_node_checklist, "conversations": messages, "benchmark_version": args.benchmark_version, "utility": utility, "security": security, "total_tokens": llm.client.total_tokens - pre_total_tokens, "duration": end_time - start_time, **pact_result_fields()}, f, indent=4)
+                    json.dump({"suite_name": suite_type, "pipeline_name": f"{args.model}", "user_task_id": f"user_task_{user_task_idx}", "injection_task_id": f"injection_task_{injection_task_idx}", "attack_type": f"{attacker}", "build_constraints": args.build_constraints, "injection_isolation": args.injection_isolation, "dynamic_validation": args.dynamic_validation, "adaptive_attack": args.adaptive_attack, "tool_permission": llm.tool_permissions, "initial_trajectory": llm.initial_function_trajectory, "initial_checklist": llm.initial_node_checklist, "conversations": messages, "benchmark_version": args.benchmark_version, "utility": utility, "security": security, "total_tokens": llm.client.total_tokens - pre_total_tokens, "duration": end_time - start_time, **pact_result_fields(), **ifc_result_fields()}, f, indent=4)
 
                 logger.info(f"user_task_{user_task_idx} with injection_task_{injection_task_idx} Utility Success Ratio: {utility_result.count(True) + resume_utility} / {len(utility_result) + resume_total}")
                 logger.info(f"user_task_{user_task_idx} with injection_task_{injection_task_idx} Attack Success Ratio: {security_result.count(True) + resume_security} / {len(security_result) + resume_total}")
@@ -221,7 +240,7 @@ def main(args, suite_type):
             utility_result.append(utility)
             security_result.append(security)
             with open(result_file_path, "w") as f:
-                json.dump({"suite_name": suite_type, "pipeline_name": f"{args.model}", "user_task_id": f"user_task_{user_task_idx}", "injection_task_id": None, "attack_type": None, "build_constraints": args.build_constraints, "injection_isolation": args.injection_isolation, "dynamic_validation": args.dynamic_validation, "adaptive_attack": args.adaptive_attack, "tool_permission": llm.tool_permissions, "initial_trajectory": llm.initial_function_trajectory, "initial_checklist": llm.initial_node_checklist, "conversations": messages, "benchmark_version": args.benchmark_version, "utility": utility, "security": security, "total_tokens": llm.client.total_tokens - pre_total_tokens, "duration": end_time - start_time, **pact_result_fields()}, f, indent=4)
+                json.dump({"suite_name": suite_type, "pipeline_name": f"{args.model}", "user_task_id": f"user_task_{user_task_idx}", "injection_task_id": None, "attack_type": None, "build_constraints": args.build_constraints, "injection_isolation": args.injection_isolation, "dynamic_validation": args.dynamic_validation, "adaptive_attack": args.adaptive_attack, "tool_permission": llm.tool_permissions, "initial_trajectory": llm.initial_function_trajectory, "initial_checklist": llm.initial_node_checklist, "conversations": messages, "benchmark_version": args.benchmark_version, "utility": utility, "security": security, "total_tokens": llm.client.total_tokens - pre_total_tokens, "duration": end_time - start_time, **pact_result_fields(), **ifc_result_fields()}, f, indent=4)
 
                 logger.info(f"user_task_{user_task_idx} Utility Success Ratio: {utility_result.count(True) + resume_utility} / {len(utility_result) + resume_total}")
 
