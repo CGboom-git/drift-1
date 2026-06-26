@@ -222,6 +222,7 @@ class DRIFTLLM(PromptingLLM):
             client=self.client,
             model=self.model,
             allow_action_replan=self.args.ifc_allow_action_replan,
+            control_mode=self.args.ifc_control_mode,
         )
         self.ifc_validation_events.extend(result.events)
         self._update_ifc_decision_summary(result.events, result.allowed)

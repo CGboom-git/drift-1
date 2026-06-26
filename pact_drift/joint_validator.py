@@ -38,6 +38,7 @@ def validate_tool_call_ifc_drift(
     client: Any | None = None,
     model: str | None = None,
     allow_action_replan: bool = False,
+    control_mode: str = "strict_next_step",
 ) -> IFCJointValidationResult:
     del model
     events: list[dict[str, Any]] = []
@@ -50,7 +51,17 @@ def validate_tool_call_ifc_drift(
             event = _control_event(tool_name, "unknown", False, "reject", True, "tool missing from IFC global contract")
             events.append(event)
             return IFCJointValidationResult(False, events, updated_achieved, reason=event["reason"])
-        in_trajectory = planned_index < len(initial_function_trajectory) and tool_name == initial_function_trajectory[planned_index]
+        if control_mode == "strict_next_step":
+            in_trajectory = planned_index < len(initial_function_trajectory) and tool_name == initial_function_trajectory[planned_index]
+        elif control_mode == "drift_style":
+            in_trajectory = _is_allowed_by_drift_style_control_flow(
+                tool_name=tool_name,
+                initial_function_trajectory=initial_function_trajectory,
+                achieved_function_trajectory=updated_achieved,
+                tool_contract=tool_contract,
+            )
+        else:
+            raise ValueError(f"Unknown IFC control mode: {control_mode}")
         if not in_trajectory:
             result = _handle_out_of_trajectory(
                 call,
@@ -71,7 +82,7 @@ def validate_tool_call_ifc_drift(
         events.append(_control_event(tool_name, tool_contract.tool_type, True, "allow", False, "tool call matches planned trajectory"))
         if tool_contract.tool_type in {"READ_LOW", "READ_SENSITIVE"}:
             updated_achieved.append(tool_name)
-            planned_index += 1
+            planned_index = _next_planned_index(initial_function_trajectory, updated_achieved)
             continue
         allowed, argument_events = validate_tool_call_arguments_ifc([call], global_contract, task_flow_contract, provenance_state)
         for event in argument_events:
@@ -89,7 +100,7 @@ def validate_tool_call_ifc_drift(
                 allowed_paths=rejected.get("allowed_paths", []),
             )
         updated_achieved.append(tool_name)
-        planned_index += 1
+        planned_index = _next_planned_index(initial_function_trajectory, updated_achieved)
     return IFCJointValidationResult(True, events, updated_achieved)
 
 
@@ -209,6 +220,25 @@ def _next_planned_index(initial_trajectory: list[str], achieved_trajectory: list
         if index < len(initial_trajectory) and function_name == initial_trajectory[index]:
             index += 1
     return index
+
+
+def _is_allowed_by_drift_style_control_flow(
+    tool_name: str,
+    initial_function_trajectory: list[str],
+    achieved_function_trajectory: list[str],
+    tool_contract: Any,
+) -> bool:
+    """Lightweight DRIFT-style control-flow check."""
+    planned_index = _next_planned_index(initial_function_trajectory, achieved_function_trajectory)
+    if planned_index < len(initial_function_trajectory) and tool_name == initial_function_trajectory[planned_index]:
+        return True
+    if tool_contract.tool_type == "READ_LOW":
+        return True
+    if tool_contract.tool_type == "READ_SENSITIVE":
+        return tool_name in initial_function_trajectory
+    if tool_contract.tool_type == "ACTION":
+        return False
+    return False
 
 
 def _arguments(call: dict[str, Any]) -> tuple[str, dict[str, Any]]:

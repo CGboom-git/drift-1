@@ -69,6 +69,13 @@ def _state(record: IFCProvenanceRecord) -> IFCProvenanceState:
     return state
 
 
+def _state_many(*records: IFCProvenanceRecord) -> IFCProvenanceState:
+    state = IFCProvenanceState()
+    for record in records:
+        state.add_record(record)
+    return state
+
+
 def test_invoice_amount_to_send_money_amount_is_allowed() -> None:
     global_contract = _global()
     endorsements = ["task_delegation", "structured_extraction", "schema_validated_parse", "exact_match_to_authorized_source"]
@@ -86,6 +93,18 @@ def test_unauthorized_tool_output_to_send_money_amount_is_rejected() -> None:
     allowed, events = validate_tool_call_arguments_ifc(_call("send_money", amount="50.0"), global_contract, task, state)
     assert not allowed
     assert "unauthorized_tool_output" in events[0]["reason"]
+
+
+def test_ambiguous_same_value_authorized_and_injected_rejected() -> None:
+    global_contract = _global()
+    task = _task(global_contract, _binding(global_contract, "send_money.amount", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE"))
+    state = _state_many(
+        IFCProvenanceRecord("50.0", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE"),
+        IFCProvenanceRecord("50.0", "read_file.output.injected_instruction", "EXTERNAL", "USER_PRIVATE", marks=["injected_instruction"]),
+    )
+    allowed, events = validate_tool_call_arguments_ifc(_call("send_money", amount="50.0"), global_contract, task, state)
+    assert not allowed
+    assert "ambiguous_provenance" in events[0]["reason"]
 
 
 def test_injected_instruction_to_send_money_recipient_is_rejected() -> None:

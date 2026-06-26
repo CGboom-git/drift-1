@@ -19,6 +19,7 @@ def test_ifc_cli_args_exist_and_default_to_disabled() -> None:
     assert args.ifc_task_contract_model is None
     assert args.ifc_debug is False
     assert args.ifc_allow_action_replan is False
+    assert args.ifc_control_mode == "strict_next_step"
     assert args.ifc_disable_legacy_checklist is False
 
 

@@ -58,6 +58,7 @@ def get_args(description='DRIFT'):
     parser.add_argument("--ifc_disable_legacy_checklist", action="store_true", help="Disable legacy DRIFT checklist validation when IFC-DRIFT is enabled.")
     parser.add_argument("--ifc_debug", action="store_true", help="Emit IFC-DRIFT debug logs.")
     parser.add_argument("--ifc_allow_action_replan", action="store_true", help="Allow out-of-trajectory ACTION calls to request a secure replan instead of hard rejection.")
+    parser.add_argument("--ifc_control_mode", type=str, default="strict_next_step", choices=["strict_next_step", "drift_style"], help="IFC-DRIFT control-flow mode.")
 
     # Environment
     parser.add_argument('--seed', type=int, default=98, help='Random Seed.')

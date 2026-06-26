@@ -72,6 +72,46 @@ _RAW_EXTERNAL_TEXT_TOOLS = {
     "search_emails",
 }
 
+_FIELD_ALIASES = {
+    "file": "file_id",
+    "fileid": "file_id",
+    "file_id": "file_id",
+    "email": "email_id",
+    "emailid": "email_id",
+    "email_id": "email_id",
+    "from": "sender",
+    "sender": "sender",
+    "subject": "subject",
+    "body": "body",
+    "message": "message",
+    "content": "content",
+    "summary": "summary",
+    "channel": "channel",
+    "channel_id": "channel_id",
+    "channelid": "channel_id",
+    "title": "title",
+    "date": "date",
+    "participants": "participants",
+    "attendees": "participants",
+    "start": "start_time",
+    "start_time": "start_time",
+    "end": "end_time",
+    "end_time": "end_time",
+    "hotel": "hotel_name",
+    "hotel_name": "hotel_name",
+    "price": "price",
+    "rating": "rating",
+    "address": "address",
+    "restaurant": "restaurant_name",
+    "restaurant_name": "restaurant_name",
+    "opening_hours": "opening_hours",
+}
+
+_SELECTED_LIST_ALIASES = {
+    "search_files": ("selected_file", "filename"),
+    "get_day_calendar_events": ("event_id", "title"),
+}
+
 
 def record_user_explicit_fields_ifc(
     user_query: str,
@@ -133,11 +173,35 @@ def record_tool_output_ifc(
             metadata={"tool": tool_name, "kind": "raw_tool_output"},
         )
     )
+    for record in flatten_tool_output(tool_name, tool_output):
+        record.I_label = raw_i if "raw_external_content" in raw_marks else record.I_label
+        if "raw_external_content" in raw_marks and "raw_external_content" not in record.marks:
+            record.marks.append("raw_external_content")
+        if "unauthorized_tool_output" in raw_marks and "unauthorized_tool_output" not in record.marks:
+            record.marks.append("unauthorized_tool_output")
+        record.C_label = raw_c
+        record.authorized_for_action_flow = _is_authorized_path(task_flow_contract, record.source_path)
+        provenance_state.add_record(record)
     if tool_name == "read_file":
         for record in extract_ifc_structured_fields(tool_output, task_flow_contract):
             provenance_state.add_record(record)
     if tool_name == "get_iban":
         provenance_state.add_record(_get_iban_record(tool_args, tool_output, provenance_state, task_flow_contract))
+
+
+def flatten_tool_output(tool_name: str, output: Any) -> list[IFCProvenanceRecord]:
+    """Flatten common tool outputs into IFC provenance records."""
+    parsed = _parse_output(output)
+    records: list[IFCProvenanceRecord] = []
+    if isinstance(parsed, str):
+        if tool_name in {"read_file", "get_file_by_id", "get_webpage"}:
+            records.append(_flat_record(tool_name, "content", parsed, ["structured_extraction"]))
+        return records
+    if isinstance(parsed, dict):
+        _flatten_mapping(tool_name, parsed, records)
+    elif isinstance(parsed, list):
+        _flatten_list(tool_name, parsed, records)
+    return _dedupe_records(records)
 
 
 def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | None) -> list[IFCProvenanceRecord]:
@@ -255,3 +319,77 @@ def _normalize_value(value: Any) -> str:
 
 def _unique(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
+
+
+def _parse_output(output: Any) -> Any:
+    if not isinstance(output, str):
+        return output
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError:
+        return output
+
+
+def _flatten_mapping(tool_name: str, data: dict[str, Any], records: list[IFCProvenanceRecord]) -> None:
+    for key, value in data.items():
+        field_name = _canonical_field_name(tool_name, str(key))
+        records.append(_flat_record(tool_name, field_name, value, ["structured_extraction"]))
+        if isinstance(value, dict):
+            _flatten_mapping(tool_name, value, records)
+        elif isinstance(value, list):
+            _flatten_list(tool_name, value, records)
+
+
+def _flatten_list(tool_name: str, values: list[Any], records: list[IFCProvenanceRecord]) -> None:
+    for index, item in enumerate(values):
+        if isinstance(item, dict):
+            for key, value in item.items():
+                field_name = _canonical_field_name(tool_name, str(key))
+                records.append(_flat_record(tool_name, f"items.{index}.{field_name}", value, ["structured_extraction"]))
+                records.append(_flat_record(tool_name, field_name, value, ["structured_extraction"]))
+            _add_selected_aliases(tool_name, item, records)
+        else:
+            records.append(_flat_record(tool_name, f"items.{index}", item, ["structured_extraction"]))
+
+
+def _add_selected_aliases(tool_name: str, item: dict[str, Any], records: list[IFCProvenanceRecord]) -> None:
+    for alias in _SELECTED_LIST_ALIASES.get(tool_name, ()):
+        source_key = alias
+        if source_key not in item and alias == "selected_file":
+            source_key = "filename"
+        if source_key in item:
+            records.append(_flat_record(tool_name, alias, item[source_key], ["structured_extraction"]))
+
+
+def _canonical_field_name(tool_name: str, key: str) -> str:
+    normalized = key.strip().lower().replace(" ", "_").replace("-", "_")
+    if normalized == "id":
+        if tool_name in {"get_received_emails", "get_unread_emails", "search_emails"}:
+            return "email_id"
+        if tool_name == "get_channels":
+            return "channel_id"
+        if tool_name == "get_day_calendar_events":
+            return "event_id"
+        if tool_name in {"read_file", "get_file_by_id", "search_files", "create_file", "append_to_file"}:
+            return "file_id"
+    return _FIELD_ALIASES.get(normalized, normalized)
+
+
+def _flat_record(tool_name: str, field_name: str, value: Any, transformations: list[str]) -> IFCProvenanceRecord:
+    return IFCProvenanceRecord(
+        value=value,
+        source_path=f"{tool_name}.output.{field_name}",
+        I_label="TOOL_OUTPUT",
+        C_label="INTERNAL",
+        marks=[],
+        transformations=transformations,
+        authorized_for_action_flow=False,
+        metadata={"tool": tool_name, "field": field_name, "kind": "flattened_tool_output"},
+    )
+
+
+def _dedupe_records(records: list[IFCProvenanceRecord]) -> list[IFCProvenanceRecord]:
+    deduped: dict[str, IFCProvenanceRecord] = {}
+    for record in records:
+        deduped[record.source_path] = record
+    return list(deduped.values())

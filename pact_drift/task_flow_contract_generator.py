@@ -51,6 +51,13 @@ def deterministic_task_flow_contract(
     explicit_fields = extract_explicit_user_fields(user_query)
     flow_bindings: dict[str, list[FlowBinding]] = {}
     unresolved: list[UnresolvedBinding] = []
+    _try_banking_invoice_fallback(
+        user_query,
+        initial_function_trajectory,
+        global_contract,
+        flow_bindings,
+        unresolved,
+    )
     for tool_name in initial_function_trajectory:
         tool = global_contract.tools.get(tool_name)
         if not tool or tool.tool_type != "ACTION":
@@ -101,7 +108,7 @@ def extract_explicit_user_fields(user_query: str) -> dict[str, Any]:
     fields: dict[str, Any] = {}
     query = user_query.strip()
     lower = query.lower()
-    amount_match = re.search(r"(?i)(?:[$€£]\s*\d+(?:\.\d+)?|\b\d+(?:\.\d+)?\s*(?:dollars?|usd|eur|euros?|pounds?|gbp)\b)", query)
+    amount_match = re.search(r"(?i)(?:[$]\s*\d+(?:\.\d+)?|\b\d+(?:\.\d+)?\s*(?:dollars?|usd|eur|euros?|pounds?|gbp)\b)", query)
     if amount_match:
         number = re.search(r"\d+(?:\.\d+)?", amount_match.group(0))
         fields["amount"] = number.group(0) if number else amount_match.group(0).strip()
@@ -142,12 +149,32 @@ def extract_explicit_user_fields(user_query: str) -> dict[str, Any]:
 def summarize_task_flow_contract(contract: TaskFlowContract | None) -> dict[str, Any]:
     if contract is None:
         return {}
+    compact_bindings = {}
+    for sink, bindings in contract.flow_bindings.items():
+        compact_bindings[sink] = [
+            {
+                "source_path": binding.source_path,
+                "I_after": binding.I_after,
+                "C_label": binding.C_label,
+                "satisfies": list(binding.satisfies),
+                "reason": binding.reason,
+            }
+            for binding in bindings
+        ]
     return {
         "task_contract_version": contract.task_contract_version,
         "task_type": contract.task_type,
         "allowed_trajectory": contract.allowed_trajectory,
-        "flow_binding_sinks": sorted(contract.flow_bindings),
-        "unresolved_sinks": [binding.sink for binding in contract.unresolved_bindings],
+        "flow_bindings": compact_bindings,
+        "unresolved_bindings": [
+            {
+                "sink": item.sink,
+                "required_constraints": list(item.required_constraints),
+                "reason": item.reason,
+                "policy": item.policy,
+            }
+            for item in contract.unresolved_bindings
+        ],
         "opportunistic_read_policy": contract.opportunistic_read_policy,
     }
 
@@ -210,6 +237,123 @@ def _add_binding(
             satisfies=list(argument_contract.flow_constraints),
             endorsements=list(endorsements) if endorsements is not None else list(argument_contract.endorsements),
             declassifications=[],
+            reason=reason,
+        )
+    )
+
+
+def _add_binding_if_allowed(
+    global_contract: IFCGlobalContract,
+    flow_bindings: dict[str, list[FlowBinding]],
+    sink: str,
+    source_path: str,
+    i_after: str,
+    c_label: str,
+    reason: str,
+    requested_endorsements: list[str],
+) -> bool:
+    try:
+        tool_name, argument_name = sink.split(".", 1)
+        argument_contract = global_contract.tools[tool_name].args[argument_name]
+    except (KeyError, ValueError):
+        return False
+    endorsements = [item for item in requested_endorsements if item in argument_contract.endorsements]
+    flow_bindings.setdefault(sink, []).append(
+        FlowBinding(
+            source_path=source_path,
+            sink=sink,
+            I_after=i_after,
+            C_label=c_label,
+            satisfies=list(argument_contract.flow_constraints),
+            endorsements=endorsements,
+            declassifications=[],
+            reason=reason,
+        )
+    )
+    return True
+
+
+def _try_banking_invoice_fallback(
+    user_query: str,
+    initial_function_trajectory: list[str],
+    global_contract: IFCGlobalContract,
+    flow_bindings: dict[str, list[FlowBinding]],
+    unresolved: list[UnresolvedBinding],
+) -> bool:
+    """Add deterministic bindings for canonical invoice payment tasks."""
+    if not _looks_like_invoice_payment_task(user_query, initial_function_trajectory):
+        return False
+    send_money = global_contract.tools.get("send_money")
+    if send_money is None or send_money.tool_type != "ACTION":
+        return False
+
+    applied = False
+    common_endorsements = [
+        "task_delegation",
+        "structured_extraction",
+        "schema_validated_parse",
+        "exact_match_to_authorized_source",
+    ]
+    if "get_iban" in initial_function_trajectory and "recipient" in send_money.args:
+        applied = _add_binding_if_allowed(
+            global_contract,
+            flow_bindings,
+            "send_money.recipient",
+            "get_iban.output.iban",
+            "DELEGATED",
+            "USER_PRIVATE",
+            "recipient is derived from the task-delegated invoice creditor through get_iban",
+            [*common_endorsements, "trusted_tool_derivation"],
+        ) or applied
+    elif "recipient" in send_money.args:
+        _add_unresolved_once(
+            unresolved,
+            "send_money.recipient",
+            list(send_money.args["recipient"].flow_constraints),
+            "Canonical invoice payment fallback requires get_iban before authorizing send_money.recipient.",
+        )
+
+    invoice_bindings = {
+        "amount": ("read_file.output.invoice.amount", "SENSITIVE", "amount is extracted from the task-delegated invoice"),
+        "subject": ("read_file.output.invoice.subject", "USER_PRIVATE", "subject is extracted from the task-delegated invoice"),
+        "date": ("read_file.output.invoice.due_date", "SENSITIVE", "due date is extracted from the task-delegated invoice"),
+    }
+    for argument_name, (source_path, c_label, reason) in invoice_bindings.items():
+        if argument_name not in send_money.args:
+            continue
+        applied = _add_binding_if_allowed(
+            global_contract,
+            flow_bindings,
+            f"send_money.{argument_name}",
+            source_path,
+            "DELEGATED",
+            c_label,
+            reason,
+            common_endorsements,
+        ) or applied
+    return applied
+
+
+def _looks_like_invoice_payment_task(user_query: str, trajectory: list[str]) -> bool:
+    lower = user_query.lower()
+    has_payment = any(word in lower for word in ["pay", "payment", "transfer", "send money"])
+    has_invoice = any(word in lower for word in ["invoice", "bill", "receipt"])
+    has_file = any(token in lower for token in [".txt", ".pdf", "file", "document", "invoice", "bill"])
+    return has_payment and has_invoice and has_file and "read_file" in trajectory and "send_money" in trajectory
+
+
+def _add_unresolved_once(
+    unresolved: list[UnresolvedBinding],
+    sink: str,
+    required_constraints: list[str],
+    reason: str,
+) -> None:
+    if sink in {item.sink for item in unresolved}:
+        return
+    unresolved.append(
+        UnresolvedBinding(
+            sink=sink,
+            required_constraints=required_constraints,
             reason=reason,
         )
     )

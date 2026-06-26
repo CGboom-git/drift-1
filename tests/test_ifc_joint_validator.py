@@ -96,6 +96,24 @@ def test_out_of_trajectory_read_low_is_allowed_and_tracked() -> None:
     assert result.events[0]["decision"] == "allow_read_and_track"
 
 
+def test_drift_style_allows_read_low_before_next_planned_action() -> None:
+    global_contract = _global()
+    result = validate_tool_call_ifc_drift(
+        _call("search_web", query="weather"),
+        query="pay invoice",
+        messages=[],
+        initial_function_trajectory=["send_money"],
+        achieved_function_trajectory=[],
+        global_contract=global_contract,
+        task_flow_contract=_task(global_contract),
+        provenance_state=_state(),
+        control_mode="drift_style",
+    )
+    assert result.allowed
+    assert result.events[0]["decision"] == "allow"
+    assert result.events[0]["out_of_trajectory"] is False
+
+
 def test_out_of_trajectory_read_sensitive_is_quarantined_without_client() -> None:
     global_contract = _global()
     result = validate_tool_call_ifc_drift(
@@ -144,3 +162,22 @@ def test_out_of_trajectory_action_can_request_replan_when_explicitly_enabled() -
     )
     assert not result.allowed
     assert result.events[0]["decision"] == "replan_required"
+
+
+def test_read_output_not_authorized_for_action_by_default() -> None:
+    global_contract = _global()
+    state = IFCProvenanceState()
+    state.add_record(IFCProvenanceRecord("50.0", "search_web.output.amount", "TOOL_OUTPUT", "PUBLIC"))
+    result = validate_tool_call_ifc_drift(
+        _call("send_money", amount="50.0"),
+        query="pay invoice",
+        messages=[],
+        initial_function_trajectory=["send_money"],
+        achieved_function_trajectory=[],
+        global_contract=global_contract,
+        task_flow_contract=_task(global_contract),
+        provenance_state=state,
+    )
+    assert not result.allowed
+    assert result.rejected_sink == "send_money.amount"
+    assert "source_path_not_authorized_by_task" in result.reason

@@ -5,7 +5,7 @@ from pact_drift.task_flow_contract import (
     TASK_CONTRACT_VERSION,
     validate_task_flow_contract_schema,
 )
-from pact_drift.task_flow_contract_generator import deterministic_task_flow_contract, extract_explicit_user_fields
+from pact_drift.task_flow_contract_generator import deterministic_task_flow_contract, extract_explicit_user_fields, summarize_task_flow_contract
 
 
 def _schema(name: str, properties: dict[str, dict], description: str = "") -> dict:
@@ -18,7 +18,11 @@ def _arg(description: str = "") -> dict:
 
 def _global():
     return generate_ifc_global_contract(
-        [_schema("send_money", {"amount": {"type": "number"}, "recipient": _arg(), "date": _arg()})],
+        [
+            _schema("read_file", {"file_path": _arg()}, "Read a file."),
+            _schema("get_iban", {"name": _arg()}, "Get an IBAN."),
+            _schema("send_money", {"amount": {"type": "number"}, "recipient": _arg(), "subject": _arg(), "date": _arg()}),
+        ],
         "agentdojo",
         {"name": "agentdojo", "version": "v1"},
     )
@@ -108,6 +112,30 @@ def test_deterministic_fallback_allows_only_explicit_query_fields() -> None:
     assert contract.allowed_paths_for_sink("send_money.amount") == ["user.explicit.amount"]
     assert contract.allowed_paths_for_sink("send_money.date") == ["user.explicit.date"]
     assert "send_money.amount" not in {binding.sink for binding in contract.unresolved_bindings}
+
+
+def test_summary_contains_allowed_source_paths() -> None:
+    contract = deterministic_task_flow_contract("Pay the bill in invoice.txt.", ["read_file", "get_iban", "send_money"], _global())
+    summary = summarize_task_flow_contract(contract)
+    assert summary["flow_bindings"]["send_money.amount"][0]["source_path"] == "read_file.output.invoice.amount"
+    assert summary["flow_bindings"]["send_money.recipient"][0]["source_path"] == "get_iban.output.iban"
+    assert "flow_binding_sinks" not in summary
+    assert "unresolved_sinks" not in summary
+
+
+def test_banking_invoice_fallback_adds_expected_bindings() -> None:
+    contract = deterministic_task_flow_contract("Pay the bill in invoice.txt.", ["read_file", "get_iban", "send_money"], _global())
+    assert contract.allowed_paths_for_sink("send_money.recipient") == ["get_iban.output.iban"]
+    assert contract.allowed_paths_for_sink("send_money.amount") == ["read_file.output.invoice.amount"]
+    assert contract.allowed_paths_for_sink("send_money.subject") == ["read_file.output.invoice.subject"]
+    assert contract.allowed_paths_for_sink("send_money.date") == ["read_file.output.invoice.due_date"]
+
+
+def test_banking_invoice_fallback_requires_get_iban_for_recipient() -> None:
+    contract = deterministic_task_flow_contract("Pay the bill in invoice.txt.", ["read_file", "send_money"], _global())
+    assert "send_money.recipient" not in contract.flow_bindings
+    assert "send_money.recipient" in {binding.sink for binding in contract.unresolved_bindings}
+    assert contract.allowed_paths_for_sink("send_money.amount") == ["read_file.output.invoice.amount"]
 
 
 def _expect_value_error(callback) -> None:
