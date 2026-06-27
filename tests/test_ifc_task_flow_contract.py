@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pact_drift.ifc_provenance import IFCProvenanceState, record_tool_output_ifc
 from pact_drift.ifc_contract_generator import generate_ifc_global_contract
 from pact_drift.task_flow_contract import TASK_CONTRACT_VERSION, validate_task_flow_contract_schema
 from pact_drift.task_flow_contract_generator import deterministic_minimal_fallback, extract_explicit_user_fields, summarize_task_flow_contract
@@ -24,6 +25,17 @@ def _tool_schemas():
 def _global():
     return generate_ifc_global_contract(
         _tool_schemas(),
+        "generic",
+        {"name": "generic", "version": "v1"},
+    )
+
+
+def _global_with_read_file():
+    return generate_ifc_global_contract(
+        [
+            _schema("read_file", {"path": _arg("document file path")}, "Read a file."),
+            *_tool_schemas(),
+        ],
         "generic",
         {"name": "generic", "version": "v1"},
     )
@@ -73,10 +85,40 @@ def test_task_flow_contract_rejects_unsupported_required_proofs() -> None:
 
 def test_task_flow_contract_rejects_proof_not_allowed_for_sink_argument() -> None:
     global_contract = _global()
-    global_contract.tools["pay_tool"].args["amount"].endorsements = ["trusted_tool_derivation"]
+    global_contract.tools["pay_tool"].args["amount"].endorsements = ["structured_extraction"]
     data = _contract()
-    data["argument_contract"]["pay_tool.amount"]["required_proofs"] = ["structured_extraction"]
+    data["argument_contract"]["pay_tool.amount"]["required_proofs"] = ["trusted_tool_derivation"]
     _expect_value_error(lambda: validate_task_flow_contract_schema(data, global_contract))
+
+
+def test_read_file_structured_fields_use_canonical_source_paths() -> None:
+    global_contract = _global_with_read_file()
+    state = IFCProvenanceState()
+    record_tool_output_ifc(
+        tool_name="read_file",
+        tool_args={"path": "invoice.txt"},
+        tool_output={
+            "amount": "50.00",
+            "due_date": "2026-07-01",
+            "subject": "Invoice 7",
+            "creditor_name": "Acme Corp",
+            "summary": "Pay invoice 7",
+            "content": "Pay invoice 7 by 2026-07-01",
+        },
+        global_contract=global_contract,
+        task_flow_contract=None,
+        provenance_state=state,
+        in_planned_trajectory=True,
+    )
+
+    source_paths = {path for record in state.records for path in record.source_paths}
+    assert "read_file.output.amount" in source_paths
+    assert "read_file.output.due_date" in source_paths
+    assert "read_file.output.subject" in source_paths
+    assert "read_file.output.creditor_name" in source_paths
+    assert "read_file.output.summary" in source_paths
+    assert "read_file.output.content" in source_paths
+    assert not any(path.startswith("read_file.output.invoice.") for path in source_paths)
 
 
 def test_explicit_user_field_extractor_is_conservative() -> None:
