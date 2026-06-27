@@ -140,7 +140,7 @@ def _validate_argument_binding(
         raise ValueError(f"IFC task argument binding '{sink}' allowed_sources must be a list.")
     if not isinstance(binding["required_proofs"], list):
         raise ValueError(f"IFC task argument binding '{sink}' required_proofs must be a list.")
-    _require_proofs_subset(sink, binding["required_proofs"], global_contract)
+    _require_proofs_subset(sink, binding["required_proofs"], global_arg)
     for source_path in binding["allowed_sources"]:
         _validate_source_path(sink, str(source_path), trajectory)
     if any(key in binding for key in TASK_CONTRACT_FORBIDDEN_KEYS):
@@ -204,8 +204,8 @@ def _global_argument(global_contract: IFCGlobalContract, sink: str) -> IFCArgume
     return argument_contract
 
 
-def _require_proofs_subset(sink: str, proofs: list[str], global_contract: IFCGlobalContract) -> None:
-    allowed = set(global_contract.endorsement_types)
+def _require_proofs_subset(sink: str, proofs: list[str], global_argument: IFCArgumentContract) -> None:
+    allowed = set(getattr(global_argument, "endorsements", []))
     extra = set(proofs) - allowed
     if extra:
         raise ValueError(f"IFC task argument binding '{sink}' has unsupported required proofs: {sorted(extra)}.")

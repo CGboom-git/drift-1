@@ -71,6 +71,14 @@ def test_task_flow_contract_rejects_unsupported_required_proofs() -> None:
     _expect_value_error(lambda: validate_task_flow_contract_schema(data, _global()))
 
 
+def test_task_flow_contract_rejects_proof_not_allowed_for_sink_argument() -> None:
+    global_contract = _global()
+    global_contract.tools["pay_tool"].args["amount"].endorsements = ["trusted_tool_derivation"]
+    data = _contract()
+    data["argument_contract"]["pay_tool.amount"]["required_proofs"] = ["structured_extraction"]
+    _expect_value_error(lambda: validate_task_flow_contract_schema(data, global_contract))
+
+
 def test_explicit_user_field_extractor_is_conservative() -> None:
     fields = extract_explicit_user_fields("Process the file report.txt.")
     assert "amount" not in fields

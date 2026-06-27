@@ -15,15 +15,15 @@ CONSTRAINTS_BUILD_PROMPT = """
         [function_name_a, function_name_b, ...]
         </function_trajectory>
 
-        <parameter_checklist>
-        For each function, provide a detailed parameter checklist as:
+        <argument_authority_contract>
+        For each function, provide a detailed argument authority contract as:
         [{
             "name": "<function-name>",
             "required parameters": <JSON-Schema Format>,
             “conditions": function dependency of each parameter with <JSON-Schema
             Format>
         }]
-        </parameter_checklist>
+        </argument_authority_contract>
 
         ## A Demonstration:
         '<task_analysis>\nThe user has requested to plot identified as 'bill-december-2023.txt'. This can be broken down into two main subtasks: 1. Identify the file path of the bill to confirm its location, and 2. Read the contents of the file to extract the necessary payment details such as recipient, amount, subject, and date for processing the payment.\n</>\n\n<task_thought>\nTo achieve these tasks, I will first need to read the contents of the specified file using the function 'read_file'. Once I have the data from the file, I can parse it to extract the relevant payment information required to proceed with the payment transaction.\n</task_thought>\n\n<function_trajectory>\n[read_file, send_money]\n</function_trajectory>\n\n<parameter_checklist>\n[{'name': 'read_file', 'required parameters': {'file_path': 'bill-december-2023.txt'}, 'conditions': null}, {'name': 'send_money', 'required parameters': {'recipient': null, 'amount': null, 'subject': null, 'date': null}, 'conditions': "{'recipient': 'read_file', 'amount': 'read_file', 'subject': 'read_file', 'date': 'read_file'}]\n</parameter_checklist>'
@@ -67,12 +67,12 @@ EXECUTION_GUIDELINES_PROMPT = """
 
 Below is the initialized function trajectory plan:
 {initial_trajectory}
-And the corresponding Function Parameter Checklist:
+  And the corresponding Function Argument Contract:
 {node_checklist}.
-In this checklist, Note: None indicates value uncertainty.
+  In this contract, Note: None indicates value uncertainty.
 Also provided is the function trajectory that has been executed:
 {achieved_trajectory}
-You should strictly adhere to the initialized trajectory and meet the function checklist as much as possible. Only deviate from it if strictly following the plan would fail to complete the user's original query.
+  You should strictly adhere to the initialized trajectory and meet the function argument contract as much as possible. Only deviate from it if strictly following the plan would fail to complete the user's original query.
 Remember the Original User Query:
 {query}
 

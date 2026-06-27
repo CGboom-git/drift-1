@@ -1063,7 +1063,7 @@ class DRIFTLLM(PromptingLLM):
                 error_message["content"] = f"</function_error>\n{error_message}\n</function_error>"
                 return query, runtime, env, [*messages, output, error_message], extra_args
 
-            error_message, output = self.checklist_constraint_validation(json_tool_calls, output, query, messages)
+            error_message, output = self.argument_authority_validation(json_tool_calls, output, query, messages)
             if error_message:
                 error_message["content"] = f"</function_error>\n{error_message}\n</function_error>"
                 return query, runtime, env, [*messages, output, error_message], extra_args

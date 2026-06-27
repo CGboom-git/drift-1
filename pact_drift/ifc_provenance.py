@@ -249,7 +249,7 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
         value = _field_from_mapping(output, aliases) or _field_from_text(text, aliases)
         if value is None:
             continue
-        source_path = f"read_file.output.invoice.{field_name}"
+        source_path = f"read_file.output.{field_name}"
         records.append(
             ArgumentProvenance(
                 value=value,
@@ -259,7 +259,7 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
                 marks=set(),
                 proofs={"structured_extraction"},
                 authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
-                metadata={"tool": "read_file", "field": f"invoice.{field_name}"},
+                metadata={"tool": "read_file", "field": field_name},
             )
         )
     return records

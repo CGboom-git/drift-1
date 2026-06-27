@@ -4,7 +4,7 @@ import json
 
 from pact_drift.argument_flow_validator import validate_tool_call_arguments_ifc
 from pact_drift.ifc_contract_generator import generate_ifc_global_contract
-from pact_drift.ifc_provenance import IFCProvenanceRecord, IFCProvenanceState
+from pact_drift.ifc_provenance import IFCProvenanceRecord, IFCProvenanceState, record_tool_output_ifc
 from pact_drift.task_flow_contract import ArgumentAuthorityBinding, TaskFlowContract, UnresolvedArgumentBinding
 
 
@@ -19,6 +19,7 @@ def _arg(description: str = "") -> dict:
 def _global():
     return generate_ifc_global_contract(
         [
+            _schema("read_file", {"path": _arg()}),
             _schema("send_money", {"recipient": _arg(), "amount": {"type": "number"}, "subject": _arg(), "date": _arg()}),
             _schema("send_email", {"to": _arg(), "subject": _arg(), "body": _arg()}),
             _schema("create_file", {"filename": _arg(), "content": _arg()}),
@@ -99,3 +100,33 @@ def test_multi_source_with_untrusted_source_is_rejected() -> None:
     allowed, events = validate_tool_call_arguments_ifc(_call("send_money", amount="50.0"), global_contract, task, state)
     assert not allowed
     assert "source_not_authorized" in events[0]["reason"]
+
+
+def test_read_file_structured_fields_use_canonical_source_paths() -> None:
+    global_contract = _global()
+    task = _task(("send_money.amount", _binding(["read_file.output.amount"], ["structured_extraction"])))
+    state = IFCProvenanceState()
+    record_tool_output_ifc(
+        tool_name="read_file",
+        tool_args={"path": "invoice.txt"},
+        tool_output={
+            "amount": "50.00",
+            "due_date": "2026-07-01",
+            "subject": "Invoice 7",
+            "creditor_name": "Acme Corp",
+            "summary": "Pay invoice 7",
+            "content": "Pay invoice 7 by 2026-07-01",
+        },
+        global_contract=global_contract,
+        task_flow_contract=task,
+        provenance_state=state,
+        in_planned_trajectory=True,
+    )
+    source_paths = {path for record in state.records for path in record.source_paths}
+    assert "read_file.output.amount" in source_paths
+    assert "read_file.output.due_date" in source_paths
+    assert "read_file.output.subject" in source_paths
+    assert "read_file.output.creditor_name" in source_paths
+    assert "read_file.output.summary" in source_paths
+    assert "read_file.output.content" in source_paths
+    assert not any(path.startswith("read_file.output.invoice.") for path in source_paths)
