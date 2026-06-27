@@ -5,26 +5,18 @@ from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
 from typing import Any
 
-from pact_drift.ifc_contract_schema import (
-    CONFIDENTIALITY_LATTICE,
-    INTEGRITY_LATTICE,
-    IFCArgumentContract,
-    IFCGlobalContract,
-)
+from pact_drift.ifc_contract_schema import IFCGlobalContract, IFCArgumentContract
 
-TASK_CONTRACT_VERSION = "pact_drift_ifc_task_v1"
+TASK_CONTRACT_VERSION = "argument_authority_contract_v1"
 TASK_CONTRACT_FORBIDDEN_KEYS = {"sink_role", "I_min", "C_max", "deny_marks"}
+_ALLOWED_SOURCE_PREFIXES = ("user.explicit.",)
+_ALLOWED_PROOFS = {"user_explicit", "structured_extraction", "trusted_tool_derivation"}
 
 
 @dataclass
-class FlowBinding:
-    source_path: str
-    sink: str
-    I_after: str
-    C_label: str
-    satisfies: list[str] = field(default_factory=list)
-    endorsements: list[str] = field(default_factory=list)
-    declassifications: list[str] = field(default_factory=list)
+class ArgumentAuthorityBinding:
+    allowed_sources: list[str] = field(default_factory=list)
+    required_proofs: list[str] = field(default_factory=list)
     reason: str = ""
 
     def to_json(self) -> dict[str, Any]:
@@ -32,60 +24,68 @@ class FlowBinding:
 
 
 @dataclass
-class UnresolvedBinding:
+class UnresolvedArgumentBinding:
     sink: str
-    required_constraints: list[str]
     reason: str
     policy: str = "safe_refusal"
 
 
 @dataclass
 class TaskFlowContract:
-    task_contract_version: str
-    task_type: str
+    contract_version: str
     allowed_trajectory: list[str]
-    opportunistic_read_policy: dict[str, Any]
-    source_delegations: list[dict[str, Any]]
-    flow_bindings: dict[str, list[FlowBinding]]
-    unresolved_bindings: list[UnresolvedBinding]
-    missing_required_field: str = "safe_refusal"
+    argument_contract: dict[str, ArgumentAuthorityBinding]
+    unresolved_bindings: list[UnresolvedArgumentBinding]
 
     def to_json(self) -> dict[str, Any]:
         return task_flow_contract_to_jsonable(self)
 
-    def allowed_paths_for_sink(self, sink: str) -> list[str]:
-        return [binding.source_path for binding in self.flow_bindings.get(sink, [])]
+    def allowed_sources_for_sink(self, sink: str) -> list[str]:
+        binding = self.argument_contract.get(sink)
+        return list(binding.allowed_sources) if binding else []
 
-    def bindings_for_sink(self, sink: str) -> list[FlowBinding]:
-        return self.flow_bindings.get(sink, [])
+    def allowed_paths_for_sink(self, sink: str) -> list[str]:
+        return self.allowed_sources_for_sink(sink)
+
+    def bindings_for_sink(self, sink: str) -> list[ArgumentAuthorityBinding]:
+        binding = self.argument_contract.get(sink)
+        return [binding] if binding else []
 
 
 def task_flow_contract_to_jsonable(obj: Any) -> Any:
     if is_dataclass(obj):
-        return {key: task_flow_contract_to_jsonable(value) for key, value in asdict(obj).items()}
+        data = asdict(obj)
+        return {key: task_flow_contract_to_jsonable(value) for key, value in data.items()}
     if isinstance(obj, dict):
         return {key: task_flow_contract_to_jsonable(value) for key, value in obj.items()}
     if isinstance(obj, list):
         return [task_flow_contract_to_jsonable(value) for value in obj]
+    if isinstance(obj, set):
+        return sorted(task_flow_contract_to_jsonable(value) for value in obj)
     return obj
 
 
 def task_flow_contract_from_json(data: dict[str, Any], global_contract: IFCGlobalContract) -> TaskFlowContract:
     validate_task_flow_contract_schema(data, global_contract)
     return TaskFlowContract(
-        task_contract_version=data["task_contract_version"],
-        task_type=data["task_type"],
-        allowed_trajectory=list(data["allowed_trajectory"]),
-        opportunistic_read_policy=dict(data["opportunistic_read_policy"]),
-        source_delegations=list(data.get("source_delegations", [])),
-        flow_bindings={
-            sink: [FlowBinding(**binding) for binding in bindings]
-            for sink, bindings in data.get("flow_bindings", {}).items()
+        contract_version=data["contract_version"],
+        allowed_trajectory=[str(item) for item in data.get("allowed_trajectory", [])],
+        argument_contract={
+            sink: ArgumentAuthorityBinding(
+                allowed_sources=[str(source) for source in binding.get("allowed_sources", [])],
+                required_proofs=[str(proof) for proof in binding.get("required_proofs", [])],
+                reason=str(binding.get("reason", "")),
+            )
+            for sink, binding in data.get("argument_contract", {}).items()
         },
         unresolved_bindings=[
-            UnresolvedBinding(**binding) for binding in data.get("unresolved_bindings", [])
+            UnresolvedArgumentBinding(
+                sink=str(binding["sink"]),
+                reason=str(binding.get("reason", "")),
+                policy=str(binding.get("policy", "safe_refusal")),
+            )
+            for binding in data.get("unresolved_bindings", [])
         ],
-        missing_required_field=data.get("missing_required_field", "safe_refusal"),
     )
 
 
@@ -104,62 +104,90 @@ def save_task_flow_contract(contract: TaskFlowContract, path: str) -> None:
 
 def validate_task_flow_contract_schema(data: dict[str, Any], global_contract: IFCGlobalContract) -> None:
     _reject_global_policy_fields(data)
-    for field_name in (
-        "task_contract_version",
-        "task_type",
-        "allowed_trajectory",
-        "opportunistic_read_policy",
-        "source_delegations",
-        "flow_bindings",
-        "unresolved_bindings",
-        "missing_required_field",
-    ):
+    for field_name in ("contract_version", "allowed_trajectory", "argument_contract", "unresolved_bindings"):
         if field_name not in data:
-            raise ValueError(f"IFC task flow contract is missing required field '{field_name}'.")
-    if data["task_contract_version"] != TASK_CONTRACT_VERSION:
-        raise ValueError(f"Unsupported IFC task flow contract version '{data['task_contract_version']}'.")
+            raise ValueError(f"IFC task argument contract is missing required field '{field_name}'.")
+    if data["contract_version"] != TASK_CONTRACT_VERSION:
+        raise ValueError(f"Unsupported IFC task argument contract version '{data['contract_version']}'.")
     if not isinstance(data["allowed_trajectory"], list):
-        raise ValueError("IFC task flow contract allowed_trajectory must be a list.")
-    if not isinstance(data["flow_bindings"], dict):
-        raise ValueError("IFC task flow contract flow_bindings must be an object.")
-    for sink, bindings in data["flow_bindings"].items():
-        global_arg = _global_argument(global_contract, sink)
-        if not isinstance(bindings, list):
-            raise ValueError(f"IFC task flow binding '{sink}' must be a list.")
-        for binding in bindings:
-            _validate_flow_binding(sink, binding, global_arg)
-    for unresolved in data.get("unresolved_bindings", []):
-        sink = unresolved.get("sink")
-        if not isinstance(sink, str):
-            raise ValueError("IFC unresolved binding must include a sink string.")
-        _global_argument(global_contract, sink)
-        required = unresolved.get("required_constraints", [])
-        if not set(required).issubset(set(_global_argument(global_contract, sink).flow_constraints)):
-            raise ValueError(f"IFC unresolved binding '{sink}' references constraints outside the global contract.")
+        raise ValueError("IFC task argument contract allowed_trajectory must be a list.")
+    if not isinstance(data["argument_contract"], dict):
+        raise ValueError("IFC task argument contract argument_contract must be an object.")
+    if not isinstance(data["unresolved_bindings"], list):
+        raise ValueError("IFC task argument contract unresolved_bindings must be a list.")
+
+    trajectory = {str(item) for item in data["allowed_trajectory"]}
+    for sink, binding in data["argument_contract"].items():
+        _validate_argument_binding(sink, binding, global_contract, trajectory)
+    for unresolved in data["unresolved_bindings"]:
+        _validate_unresolved_binding(unresolved, global_contract, trajectory)
 
 
-def _validate_flow_binding(sink: str, binding: dict[str, Any], global_arg: IFCArgumentContract) -> None:
-    for field_name in (
-        "source_path",
-        "sink",
-        "I_after",
-        "C_label",
-        "satisfies",
-        "endorsements",
-        "declassifications",
-        "reason",
-    ):
+def _validate_argument_binding(
+    sink: str,
+    binding: dict[str, Any],
+    global_contract: IFCGlobalContract,
+    trajectory: set[str],
+) -> None:
+    for field_name in ("allowed_sources", "required_proofs", "reason"):
         if field_name not in binding:
-            raise ValueError(f"IFC flow binding '{sink}' is missing '{field_name}'.")
-    if binding["sink"] != sink:
-        raise ValueError(f"IFC flow binding key '{sink}' does not match binding sink '{binding['sink']}'.")
-    if binding["I_after"] not in INTEGRITY_LATTICE:
-        raise ValueError(f"IFC flow binding '{sink}' has invalid I_after '{binding['I_after']}'.")
-    if binding["C_label"] not in CONFIDENTIALITY_LATTICE:
-        raise ValueError(f"IFC flow binding '{sink}' has invalid C_label '{binding['C_label']}'.")
-    _require_subset(sink, "satisfies", binding["satisfies"], global_arg.flow_constraints)
-    _require_subset(sink, "endorsements", binding["endorsements"], global_arg.endorsements)
-    _require_subset(sink, "declassifications", binding["declassifications"], global_arg.declassifications)
+            raise ValueError(f"IFC task argument binding '{sink}' is missing '{field_name}'.")
+    global_arg = _global_argument(global_contract, sink)
+    tool_name, _ = sink.split(".", 1)
+    if tool_name not in trajectory:
+        raise ValueError(f"IFC task argument binding '{sink}' references a tool outside the allowed trajectory.")
+    if not isinstance(binding["allowed_sources"], list):
+        raise ValueError(f"IFC task argument binding '{sink}' allowed_sources must be a list.")
+    if not isinstance(binding["required_proofs"], list):
+        raise ValueError(f"IFC task argument binding '{sink}' required_proofs must be a list.")
+    _require_proofs_subset(sink, binding["required_proofs"], global_contract)
+    for source_path in binding["allowed_sources"]:
+        _validate_source_path(sink, str(source_path), trajectory)
+    if any(key in binding for key in TASK_CONTRACT_FORBIDDEN_KEYS):
+        raise ValueError(f"IFC task argument binding '{sink}' must not contain legacy global contract fields.")
+    if not isinstance(binding["reason"], str):
+        raise ValueError(f"IFC task argument binding '{sink}' reason must be a string.")
+    _global_argument(global_contract, sink)
+
+
+def _validate_unresolved_binding(unresolved: dict[str, Any], global_contract: IFCGlobalContract, trajectory: set[str]) -> None:
+    sink = unresolved.get("sink")
+    if not isinstance(sink, str):
+        raise ValueError("IFC unresolved argument binding must include a sink string.")
+    tool_name, _ = sink.split(".", 1)
+    if tool_name not in trajectory:
+        raise ValueError(f"IFC unresolved argument binding '{sink}' references a tool outside the allowed trajectory.")
+    _global_argument(global_contract, sink)
+    if not isinstance(unresolved.get("reason", ""), str):
+        raise ValueError(f"IFC unresolved argument binding '{sink}' reason must be a string.")
+    if unresolved.get("policy", "safe_refusal") != "safe_refusal":
+        raise ValueError(f"IFC unresolved argument binding '{sink}' must use safe_refusal policy.")
+
+
+def _validate_source_path(sink: str, source_path: str, trajectory: set[str]) -> None:
+    if source_path.startswith("user.explicit."):
+        return
+    if " -> " in source_path:
+        left, right = [part.strip() for part in source_path.split("->", 1)]
+        _validate_single_source_path(sink, left, trajectory)
+        _validate_single_source_path(sink, right, trajectory)
+        return
+    _validate_single_source_path(sink, source_path, trajectory)
+
+
+def _validate_single_source_path(sink: str, source_path: str, trajectory: set[str]) -> None:
+    if not source_path:
+        raise ValueError(f"IFC task argument binding '{sink}' has an empty allowed source path.")
+    if source_path.startswith("user.explicit."):
+        return
+    try:
+        tool_name, remainder = source_path.split(".output.", 1)
+    except ValueError as exc:
+        raise ValueError(f"IFC task argument binding '{sink}' has invalid source path '{source_path}'.") from exc
+    if tool_name not in trajectory:
+        raise ValueError(f"IFC task argument binding '{sink}' references source tool '{tool_name}' outside the trajectory.")
+    if not remainder:
+        raise ValueError(f"IFC task argument binding '{sink}' has incomplete source path '{source_path}'.")
 
 
 def _global_argument(global_contract: IFCGlobalContract, sink: str) -> IFCArgumentContract:
@@ -176,19 +204,18 @@ def _global_argument(global_contract: IFCGlobalContract, sink: str) -> IFCArgume
     return argument_contract
 
 
-def _require_subset(sink: str, field_name: str, values: Any, allowed: list[str]) -> None:
-    if not isinstance(values, list):
-        raise ValueError(f"IFC flow binding '{sink}' field '{field_name}' must be a list.")
-    extra = set(values) - set(allowed)
+def _require_proofs_subset(sink: str, proofs: list[str], global_contract: IFCGlobalContract) -> None:
+    allowed = set(global_contract.endorsement_types)
+    extra = set(proofs) - allowed
     if extra:
-        raise ValueError(f"IFC flow binding '{sink}' has invalid {field_name}: {sorted(extra)}.")
+        raise ValueError(f"IFC task argument binding '{sink}' has unsupported required proofs: {sorted(extra)}.")
 
 
 def _reject_global_policy_fields(value: Any) -> None:
     if isinstance(value, dict):
         for key, nested in value.items():
             if key in TASK_CONTRACT_FORBIDDEN_KEYS:
-                raise ValueError(f"IFC task flow contract must not contain global policy field '{key}'.")
+                raise ValueError(f"IFC task argument contract must not contain global policy field '{key}'.")
             _reject_global_policy_fields(nested)
     elif isinstance(value, list):
         for nested in value:

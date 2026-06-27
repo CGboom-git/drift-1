@@ -11,7 +11,6 @@ except ImportError:  # pragma: no cover - exercised only in minimal local enviro
         return value
 
 from pact_drift.argument_flow_validator import validate_tool_call_arguments_ifc
-from pact_drift.task_flow_contract_generator import summarize_task_flow_contract
 from prompts import IFC_OUT_OF_TRAJECTORY_VALIDATION_PROMPT
 
 
@@ -70,7 +69,6 @@ def validate_tool_call_ifc_drift(
                 initial_function_trajectory,
                 updated_achieved,
                 tool_contract,
-                task_flow_contract,
                 client,
                 allow_action_replan,
             )
@@ -96,8 +94,8 @@ def validate_tool_call_ifc_drift(
                 updated_achieved,
                 rejected_sink=rejected.get("sink"),
                 reason=rejected.get("reason", "argument flow validation failed"),
-                required_constraints=rejected.get("required_constraints", []),
-                allowed_paths=rejected.get("allowed_paths", []),
+                required_constraints=rejected.get("required_proofs", []),
+                allowed_paths=rejected.get("allowed_sources", []),
             )
         updated_achieved.append(tool_name)
         planned_index = _next_planned_index(initial_function_trajectory, updated_achieved)
@@ -111,7 +109,6 @@ def _handle_out_of_trajectory(
     initial_function_trajectory: list[str],
     achieved_function_trajectory: list[str],
     tool_contract: Any,
-    task_flow_contract: Any,
     client: Any | None,
     allow_action_replan: bool,
 ) -> dict[str, Any]:
@@ -126,7 +123,6 @@ def _handle_out_of_trajectory(
             initial_function_trajectory,
             achieved_function_trajectory,
             tool_contract,
-            task_flow_contract,
             client,
         )
         if prompted["decision"] in {"allow_read_and_track", "allow_read_and_quarantine"}:
@@ -147,7 +143,6 @@ def _prompt_read_sensitive_decision(
     initial_function_trajectory: list[str],
     achieved_function_trajectory: list[str],
     tool_contract: Any,
-    task_flow_contract: Any,
     client: Any | None,
 ) -> dict[str, Any]:
     tool_name, _ = _arguments(call)
@@ -164,7 +159,6 @@ def _prompt_read_sensitive_decision(
                 "check_mode": tool_contract.check_mode,
                 "sink_scope": tool_contract.sink_scope,
             },
-            "task_flow_contract_summary": summarize_task_flow_contract(task_flow_contract),
             "latest_message": messages[-1] if messages else None,
         },
         ensure_ascii=False,
@@ -228,7 +222,6 @@ def _is_allowed_by_drift_style_control_flow(
     achieved_function_trajectory: list[str],
     tool_contract: Any,
 ) -> bool:
-    """Lightweight DRIFT-style control-flow check."""
     planned_index = _next_planned_index(initial_function_trajectory, achieved_function_trajectory)
     if planned_index < len(initial_function_trajectory) and tool_name == initial_function_trajectory[planned_index]:
         return True

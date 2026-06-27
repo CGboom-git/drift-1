@@ -1,19 +1,9 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from typing import Any
 
-from pact_drift.ifc_contract_schema import confidentiality_at_most, ifc_to_jsonable, integrity_at_least
-from pact_drift.ifc_provenance import IFCProvenanceRecord
-
-
-@dataclass
-class ProvenanceResolution:
-    record: IFCProvenanceRecord | None
-    ambiguous: bool = False
-    ambiguity_reason: str = ""
-    candidates: list[IFCProvenanceRecord] = field(default_factory=list)
+from pact_drift.ifc_provenance import ArgumentProvenance, IFCProvenanceRecord
 
 
 def validate_tool_call_arguments_ifc(
@@ -54,73 +44,69 @@ def validate_single_argument_flow(
     task_flow_contract: Any,
     provenance_state: Any,
 ) -> dict[str, Any]:
-    allowed_paths = task_flow_contract.allowed_paths_for_sink(sink) if task_flow_contract else []
-    resolution = _resolve_provenance(value, provenance_state, allowed_paths, sink)
-    candidate = resolution.record
-    if candidate is None:
-        candidate = IFCProvenanceRecord(
+    allowed_sources = task_flow_contract.allowed_sources_for_sink(sink) if task_flow_contract else []
+    required_proofs = list(getattr(task_flow_contract.argument_contract.get(sink), "required_proofs", [])) if task_flow_contract else []
+    actual = _resolve_provenance(value, provenance_state, sink)
+    if actual is None:
+        actual = ArgumentProvenance(
             value=value,
+            source_paths={f"model.generated.{sink}"},
             source_path=f"model.generated.{sink}",
-            I_label="EXTERNAL",
-            C_label="INTERNAL",
-            marks=["model_inferred_unverified", "unknown_origin"],
-            transformations=[],
-            authorized_for_action_flow=False,
+            trust="MODEL",
+            marks={"model_guess", "unknown_origin"},
+            proofs=set(),
             metadata={"kind": "model_generated"},
         )
-    matched_binding = _binding_for_source(task_flow_contract, sink, candidate.source_path)
+    actual_sources = set(actual.source_paths)
+    actual_proofs = set(actual.proofs)
+    actual_marks = set(actual.marks)
     reasons: list[str] = []
-    violation_types: list[str] = []
-    if resolution.ambiguous:
-        reasons.append("ambiguous_provenance")
-    if matched_binding is None:
-        reasons.append("source_path_not_authorized_by_task")
-    if not integrity_at_least(candidate.I_label, global_argument.I_min):
-        reasons.append("integrity_label_below_required_minimum")
-        violation_types.append("integrity")
-    if not confidentiality_at_most(candidate.C_label, global_argument.C_max):
-        required_declassifications = set(matched_binding.declassifications) if matched_binding else set()
-        actual_declassifications = set(candidate.metadata.get("declassifications", []))
-        allowed_declassifications = set(global_argument.declassifications)
-        if not required_declassifications:
-            reasons.append("confidentiality_label_exceeds_allowed_maximum")
-        elif not required_declassifications.issubset(allowed_declassifications):
-            reasons.append("declassification_not_allowed_by_global_contract")
-        elif not required_declassifications.issubset(actual_declassifications):
-            reasons.append("declassification_evidence_missing")
-        violation_types.append("confidentiality")
-    forbidden = set(candidate.marks) & set(global_argument.deny_marks)
+    if not actual_sources.issubset(set(allowed_sources)):
+        reasons.append("source_not_authorized")
+    if not set(required_proofs).issubset(actual_proofs):
+        reasons.append("required_proof_missing")
+    forbidden = actual_marks & set(global_argument.deny_marks)
     if forbidden:
-        reasons.append(f"forbidden_marks:{','.join(sorted(forbidden))}")
-    if matched_binding is not None:
-        missing_constraints = set(global_argument.flow_constraints) - set(matched_binding.satisfies)
-        if missing_constraints:
-            reasons.append(f"missing_required_flow_constraints:{','.join(sorted(missing_constraints))}")
-        required_endorsements = set(matched_binding.endorsements)
-        actual_transformations = set(candidate.transformations)
-        if not required_endorsements.issubset(actual_transformations):
-            reasons.append("endorsement_evidence_missing")
-    required_constraints = list(global_argument.flow_constraints)
+        reasons.append(f"deny_mark_hit:{','.join(sorted(forbidden))}")
     allowed = not reasons
     return {
         "sink": sink,
         "value": value,
         "allowed": allowed,
         "reason": "authorized_flow" if allowed else "; ".join(reasons),
-        "violation_types": violation_types,
-        "global_contract": ifc_to_jsonable(global_argument),
-        "matched_task_binding": matched_binding.to_json() if matched_binding else None,
-        "resolved_provenance": candidate.to_json(),
-        "required_constraints": required_constraints,
-        "allowed_paths": allowed_paths,
-        "required_endorsements": sorted(matched_binding.endorsements) if matched_binding else [],
-        "actual_transformations": sorted(candidate.transformations),
-        "required_declassifications": sorted(matched_binding.declassifications) if matched_binding else [],
-        "actual_declassifications": sorted(candidate.metadata.get("declassifications", [])),
-        "ambiguous_provenance": resolution.ambiguous,
-        "ambiguity_reason": resolution.ambiguity_reason,
-        "candidate_source_paths": [record.source_path for record in resolution.candidates],
+        "global_contract": _global_argument_to_json(global_argument),
+        "allowed_sources": allowed_sources,
+        "actual_sources": sorted(actual_sources),
+        "required_proofs": required_proofs,
+        "actual_proofs": sorted(actual_proofs),
+        "actual_marks": sorted(actual_marks),
+        "resolved_provenance": actual.to_json(),
     }
+
+
+def _resolve_provenance(value: Any, provenance_state: Any, sink: str) -> ArgumentProvenance | None:
+    if provenance_state is None:
+        return None
+    matches = provenance_state.find_by_value(value)
+    if not matches:
+        return None
+    return _merge_matches(matches, sink)
+
+
+def _merge_matches(matches: list[IFCProvenanceRecord], sink: str) -> ArgumentProvenance:
+    source_paths = set().union(*(record.source_paths for record in matches))
+    marks = set().union(*(record.marks for record in matches))
+    proofs = set().union(*(record.proofs for record in matches))
+    return ArgumentProvenance(
+        value=matches[-1].value,
+        source_paths=source_paths or {f"model.generated.{sink}"},
+        source_path=matches[-1].source_path,
+        trust=_least_trusted(matches),
+        marks=marks,
+        proofs=proofs,
+        metadata={"candidate_count": len(matches)},
+        authorized_for_action_flow=any(record.authorized_for_action_flow for record in matches),
+    )
 
 
 def _arguments(call: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -129,82 +115,20 @@ def _arguments(call: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return function.get("name", ""), json.loads(raw) if isinstance(raw, str) else raw
 
 
-def _resolve_provenance(value: Any, provenance_state: Any, allowed_paths: list[str], sink: str) -> ProvenanceResolution:
-    matches = provenance_state.find_by_value(value) if provenance_state else []
-    if not matches:
-        return ProvenanceResolution(
-            record=IFCProvenanceRecord(
-                value=value,
-                source_path=f"model.generated.{sink}",
-                I_label="EXTERNAL",
-                C_label="INTERNAL",
-                marks=["model_inferred_unverified", "unknown_origin"],
-                transformations=[],
-                authorized_for_action_flow=False,
-                metadata={"kind": "model_generated"},
-            )
-        )
-    if len(matches) == 1:
-        return ProvenanceResolution(record=matches[0], candidates=matches)
-
-    authorized = [record for record in matches if record.source_path in allowed_paths]
-    marked_candidates = [record for record in matches if record.marks]
-    if len(authorized) == 1 and not marked_candidates:
-        selected = _with_resolution_note(authorized[0], "ambiguity_resolved_by_allowed_path")
-        return ProvenanceResolution(record=selected, candidates=matches)
-    if authorized and marked_candidates:
-        return ProvenanceResolution(
-            record=authorized[-1],
-            ambiguous=True,
-            ambiguity_reason="same value also appears in a marked provenance candidate",
-            candidates=matches,
-        )
-    if len(authorized) > 1:
-        first_signature = _provenance_signature(authorized[0])
-        if all(_provenance_signature(record) == first_signature for record in authorized[1:]):
-            selected = _with_resolution_note(authorized[-1], "ambiguity_resolved_by_equivalent_allowed_candidates")
-            return ProvenanceResolution(record=selected, candidates=matches)
-        return ProvenanceResolution(
-            record=authorized[-1],
-            ambiguous=True,
-            ambiguity_reason="multiple allowed provenance candidates have incompatible labels or marks",
-            candidates=matches,
-        )
-    return ProvenanceResolution(
-        record=_most_polluted_or_last(matches),
-        candidates=matches,
-    )
+def _least_trusted(records: list[IFCProvenanceRecord]) -> str:
+    order = ["USER", "DELEGATED", "TOOL_OUTPUT", "EXTERNAL", "MODEL", "UNKNOWN"]
+    ranked = sorted(records, key=lambda record: order.index(record.trust) if record.trust in order else len(order))
+    return ranked[-1].trust if ranked else "UNKNOWN"
 
 
-def _binding_for_source(task_flow_contract: Any, sink: str, source_path: str) -> Any | None:
-    if task_flow_contract is None:
-        return None
-    for binding in task_flow_contract.bindings_for_sink(sink):
-        if binding.source_path == source_path:
-            return binding
-    return None
-
-
-def _provenance_signature(record: IFCProvenanceRecord) -> tuple[Any, ...]:
-    return (
-        record.I_label,
-        record.C_label,
-        tuple(sorted(record.marks)),
-        tuple(sorted(record.transformations)),
-        record.authorized_for_action_flow,
-    )
-
-
-def _with_resolution_note(record: IFCProvenanceRecord, note: str) -> IFCProvenanceRecord:
-    data = record.to_json()
-    metadata = dict(data.get("metadata", {}))
-    metadata["provenance_resolution"] = note
-    data["metadata"] = metadata
-    return IFCProvenanceRecord(**data)
-
-
-def _most_polluted_or_last(records: list[IFCProvenanceRecord]) -> IFCProvenanceRecord:
-    marked = [record for record in records if record.marks]
-    if marked:
-        return marked[-1]
-    return records[-1]
+def _global_argument_to_json(global_argument: Any) -> dict[str, Any]:
+    return {
+        "name": getattr(global_argument, "name", ""),
+        "sink_role": getattr(global_argument, "sink_role", ""),
+        "I_min": getattr(global_argument, "I_min", ""),
+        "C_max": getattr(global_argument, "C_max", ""),
+        "deny_marks": list(getattr(global_argument, "deny_marks", [])),
+        "flow_constraints": list(getattr(global_argument, "flow_constraints", [])),
+        "endorsements": list(getattr(global_argument, "endorsements", [])),
+        "declassifications": list(getattr(global_argument, "declassifications", [])),
+    }

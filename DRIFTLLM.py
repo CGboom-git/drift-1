@@ -242,6 +242,42 @@ class DRIFTLLM(PromptingLLM):
             ),
         }, output
 
+    def argument_authority_validation(self, json_tool_calls, output, query, messages):
+        from pact_drift.argument_flow_validator import validate_tool_call_arguments_ifc
+
+        if messages[-1]["role"] == "tool":
+            latest_function_messages = messages[-1]["content"]
+        else:
+            latest_function_messages = "No Called Functions."
+
+        thought_pattern = re.compile(r"<function_thought>(.*?)</function_thought>", re.DOTALL)
+        thought_match = thought_pattern.search(output["content"])
+        thought_content = thought_match.group(1) if thought_match else ""
+
+        allow, events = validate_tool_call_arguments_ifc(json_tool_calls, self.ifc_global_contract, self.task_flow_contract, self.ifc_provenance_state)
+        for event in events:
+            event["part"] = "argument_flow"
+        self.ifc_validation_events.extend(events)
+        self._update_ifc_decision_summary(events, allow)
+        if allow:
+            return None, output
+
+        rejected = next((event for event in events if not event.get("allowed")), events[-1] if events else {})
+        self.ifc_decision_summary["num_safe_refusals"] += 1
+        output["tool_calls"] = []
+        return {
+            "role": "user",
+            "content": IFC_ARGUMENT_VALIDATION_FAILURE_PROMPT.format(
+                reason=rejected.get("reason", "argument authority validation rejected the tool call"),
+                sink=rejected.get("sink", "unknown_sink"),
+                allowed_paths=rejected.get("allowed_sources", []),
+                actual_paths=rejected.get("actual_sources", []),
+                required_proofs=rejected.get("required_proofs", []),
+                actual_proofs=rejected.get("actual_proofs", []),
+                query=query,
+            ),
+        }, output
+
     def _update_ifc_decision_summary(self, events, allowed):
         if not allowed:
             self.ifc_decision_summary["num_rejected_tool_calls"] += 1
@@ -1001,8 +1037,19 @@ class DRIFTLLM(PromptingLLM):
 
         # Trajectory and argument-flow validation.
         if self.args.enable_ifc_drift:
-            error_message, output = self.ifc_joint_validation(json_tool_calls, output, query, messages)
+            previous_function_trajectory = copy.deepcopy(self.function_trajectory)
+            previous_achieved_trajectory = copy.deepcopy(self.achieved_function_trajectory)
+            error_message, output = self.trajectory_constraint_validation(to_call_function, output, query, messages)
             if error_message:
+                self.function_trajectory = previous_function_trajectory
+                self.achieved_function_trajectory = previous_achieved_trajectory
+                error_message["content"] = f"</function_error>\n{error_message['content']}\n</function_error>"
+                return query, runtime, env, [*messages, output, error_message], extra_args
+
+            error_message, output = self.argument_authority_validation(json_tool_calls, output, query, messages)
+            if error_message:
+                self.function_trajectory = previous_function_trajectory
+                self.achieved_function_trajectory = previous_achieved_trajectory
                 error_message["content"] = f"</function_error>\n{error_message['content']}\n</function_error>"
                 return query, runtime, env, [*messages, output, error_message], extra_args
         elif self.args.dynamic_validation:

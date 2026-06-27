@@ -2,42 +2,63 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any
 
 from pact_drift.task_flow_contract_generator import extract_explicit_user_fields
 
 
 @dataclass
-class IFCProvenanceRecord:
+class ArgumentProvenance:
     value: Any
-    source_path: str
-    I_label: str
-    C_label: str
-    marks: list[str] = field(default_factory=list)
-    transformations: list[str] = field(default_factory=list)
-    authorized_for_action_flow: bool = False
+    source_paths: set[str] = field(default_factory=set)
+    marks: set[str] = field(default_factory=set)
+    proofs: set[str] = field(default_factory=set)
+    trust: str = "TOOL_OUTPUT"
     metadata: dict[str, Any] = field(default_factory=dict)
+    source_path: str | None = None
+    authorized_for_action_flow: bool = False
 
     def to_json(self) -> dict[str, Any]:
-        return asdict(self)
+        return {
+            "value": self.value,
+            "source_paths": sorted(self.source_paths),
+            "marks": sorted(self.marks),
+            "proofs": sorted(self.proofs),
+            "trust": self.trust,
+            "metadata": self.metadata,
+            "source_path": self.source_path,
+            "authorized_for_action_flow": self.authorized_for_action_flow,
+        }
+
+
+IFCProvenanceRecord = ArgumentProvenance
 
 
 class IFCProvenanceState:
     def __init__(self) -> None:
-        self.records: list[IFCProvenanceRecord] = []
-        self.by_path: dict[str, IFCProvenanceRecord] = {}
+        self.records: list[ArgumentProvenance] = []
+        self.by_path: dict[str, ArgumentProvenance] = {}
 
-    def add_record(self, record: IFCProvenanceRecord) -> None:
+    def add_record(self, record: ArgumentProvenance) -> None:
         self.records.append(record)
-        self.by_path[record.source_path] = record
+        for source_path in record.source_paths:
+            self.by_path[source_path] = record
+        if record.source_path:
+            self.by_path[record.source_path] = record
 
-    def find_by_path(self, source_path: str) -> IFCProvenanceRecord | None:
+    def find_by_path(self, source_path: str) -> ArgumentProvenance | None:
         return self.by_path.get(source_path)
 
-    def find_by_value(self, value: Any) -> list[IFCProvenanceRecord]:
+    def find_by_value(self, value: Any) -> list[ArgumentProvenance]:
         expected = _normalize_value(value)
         return [record for record in self.records if _normalize_value(record.value) == expected]
+
+    def resolve_value(self, value: Any) -> ArgumentProvenance | None:
+        matches = self.find_by_value(value)
+        if not matches:
+            return None
+        return merge_provenance(matches)
 
     def to_json(self) -> list[dict[str, Any]]:
         return [record.to_json() for record in self.records]
@@ -123,13 +144,13 @@ def record_user_explicit_fields_ifc(
         if provenance_state.find_by_path(source_path):
             continue
         provenance_state.add_record(
-            IFCProvenanceRecord(
+            ArgumentProvenance(
                 value=value,
+                source_paths={source_path},
                 source_path=source_path,
-                I_label="USER",
-                C_label="USER_PRIVATE",
-                marks=[],
-                transformations=["user_explicit", "exact_match_to_authorized_source"],
+                trust="USER",
+                proofs={"user_explicit"},
+                marks=set(),
                 authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
                 metadata={"kind": "user_explicit"},
             )
@@ -149,38 +170,35 @@ def record_tool_output_ifc(
     output_policy = tool_contract.output if tool_contract else {}
     tool_type = tool_contract.tool_type if tool_contract else "READ_LOW"
     source_base = f"{tool_name}.output"
-    raw_i = output_policy.get("I_label", "TOOL_OUTPUT")
-    raw_c = output_policy.get("C_label", "INTERNAL")
-    raw_marks: list[str] = []
-    requires_structured_extraction = output_policy.get("requires_structured_extraction") or tool_name in _RAW_EXTERNAL_TEXT_TOOLS
-    if requires_structured_extraction:
-        raw_i = "EXTERNAL"
-        raw_marks.append("raw_external_content")
-    if tool_type == "READ_SENSITIVE" and not in_planned_trajectory:
-        if not requires_structured_extraction:
-            raw_i = "TOOL_OUTPUT"
-        raw_marks.append("unauthorized_tool_output")
     raw_path = f"{source_base}.raw"
+    requires_structured_extraction = output_policy.get("requires_structured_extraction") or tool_name in _RAW_EXTERNAL_TEXT_TOOLS
+    raw_marks: set[str] = set()
+    raw_trust = output_policy.get("I_label", "TOOL_OUTPUT")
+    if requires_structured_extraction:
+        raw_trust = "EXTERNAL"
+        raw_marks.add("raw_external_content")
+    if tool_type == "READ_SENSITIVE" and not in_planned_trajectory:
+        raw_marks.add("unauthorized_tool_output")
+        if not requires_structured_extraction:
+            raw_trust = "TOOL_OUTPUT"
     provenance_state.add_record(
-        IFCProvenanceRecord(
+        ArgumentProvenance(
             value=tool_output,
+            source_paths={raw_path},
             source_path=raw_path,
-            I_label=raw_i,
-            C_label=raw_c,
-            marks=_unique(raw_marks),
-            transformations=[],
+            trust=raw_trust,
+            marks=raw_marks,
+            proofs=set(),
             authorized_for_action_flow=_is_authorized_path(task_flow_contract, raw_path),
             metadata={"tool": tool_name, "kind": "raw_tool_output"},
         )
     )
     for record in flatten_tool_output(tool_name, tool_output):
-        record.I_label = raw_i if "raw_external_content" in raw_marks else record.I_label
-        if "raw_external_content" in raw_marks and "raw_external_content" not in record.marks:
-            record.marks.append("raw_external_content")
-        if "unauthorized_tool_output" in raw_marks and "unauthorized_tool_output" not in record.marks:
-            record.marks.append("unauthorized_tool_output")
-        record.C_label = raw_c
-        record.authorized_for_action_flow = _is_authorized_path(task_flow_contract, record.source_path)
+        if "raw_external_content" in raw_marks:
+            record.marks.add("raw_external_content")
+        if "unauthorized_tool_output" in raw_marks:
+            record.marks.add("unauthorized_tool_output")
+        record.authorized_for_action_flow = _is_authorized_path(task_flow_contract, next(iter(record.source_paths), record.source_path or ""))
         provenance_state.add_record(record)
     if tool_name == "read_file":
         for record in extract_ifc_structured_fields(tool_output, task_flow_contract):
@@ -189,13 +207,13 @@ def record_tool_output_ifc(
         provenance_state.add_record(_get_iban_record(tool_args, tool_output, provenance_state, task_flow_contract))
 
 
-def flatten_tool_output(tool_name: str, output: Any) -> list[IFCProvenanceRecord]:
+def flatten_tool_output(tool_name: str, output: Any) -> list[ArgumentProvenance]:
     """Flatten common tool outputs into IFC provenance records."""
     parsed = _parse_output(output)
-    records: list[IFCProvenanceRecord] = []
+    records: list[ArgumentProvenance] = []
     if isinstance(parsed, str):
         if tool_name in {"read_file", "get_file_by_id", "get_webpage"}:
-            records.append(_flat_record(tool_name, "content", parsed, ["structured_extraction"]))
+            records.append(_flat_record(tool_name, "content", parsed, {"structured_extraction"}))
         return records
     if isinstance(parsed, dict):
         _flatten_mapping(tool_name, parsed, records)
@@ -204,7 +222,7 @@ def flatten_tool_output(tool_name: str, output: Any) -> list[IFCProvenanceRecord
     return _dedupe_records(records)
 
 
-def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | None) -> list[IFCProvenanceRecord]:
+def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | None) -> list[ArgumentProvenance]:
     output = tool_output
     text = _text(output)
     if isinstance(output, str):
@@ -212,17 +230,17 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
             output = json.loads(output)
         except json.JSONDecodeError:
             pass
-    records: list[IFCProvenanceRecord] = []
+    records: list[ArgumentProvenance] = []
     lower = text.lower()
     if any(marker in lower for marker in _INJECTION_MARKERS):
         records.append(
-            IFCProvenanceRecord(
+            ArgumentProvenance(
                 value=text,
+                source_paths={"read_file.output.injected_instruction"},
                 source_path="read_file.output.injected_instruction",
-                I_label="EXTERNAL",
-                C_label="USER_PRIVATE",
-                marks=["injected_instruction", "raw_external_content"],
-                transformations=[],
+                trust="EXTERNAL",
+                marks={"injected_instruction", "raw_external_content"},
+                proofs=set(),
                 authorized_for_action_flow=False,
                 metadata={"tool": "read_file", "kind": "detected_instruction"},
             )
@@ -233,13 +251,13 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
             continue
         source_path = f"read_file.output.invoice.{field_name}"
         records.append(
-            IFCProvenanceRecord(
+            ArgumentProvenance(
                 value=value,
+                source_paths={source_path},
                 source_path=source_path,
-                I_label="DELEGATED",
-                C_label="SENSITIVE" if field_name in {"amount", "due_date"} else "USER_PRIVATE",
-                marks=[],
-                transformations=["task_delegation", "structured_extraction", "schema_validated_parse", "exact_match_to_authorized_source"],
+                trust="DELEGATED",
+                marks=set(),
+                proofs={"structured_extraction"},
                 authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
                 metadata={"tool": "read_file", "field": f"invoice.{field_name}"},
             )
@@ -247,7 +265,7 @@ def extract_ifc_structured_fields(tool_output: Any, task_flow_contract: Any | No
     return records
 
 
-def _get_iban_record(tool_args: dict[str, Any], tool_output: Any, state: IFCProvenanceState, task_flow_contract: Any | None) -> IFCProvenanceRecord:
+def _get_iban_record(tool_args: dict[str, Any], tool_output: Any, state: IFCProvenanceState, task_flow_contract: Any | None) -> ArgumentProvenance:
     inherited = None
     for value in tool_args.values():
         matches = state.find_by_value(value)
@@ -256,13 +274,16 @@ def _get_iban_record(tool_args: dict[str, Any], tool_output: Any, state: IFCProv
             break
     iban_value = _extract_iban_value(tool_output)
     source_path = "get_iban.output.iban"
-    return IFCProvenanceRecord(
+    inherited_source_paths = set(inherited.source_paths) if inherited else set()
+    inherited_proofs = set(inherited.proofs) if inherited else set()
+    inherited_marks = set(inherited.marks) if inherited else set()
+    return ArgumentProvenance(
         value=iban_value,
+        source_paths={source_path, *inherited_source_paths},
         source_path=source_path,
-        I_label=inherited.I_label if inherited else "TOOL_OUTPUT",
-        C_label=inherited.C_label if inherited else "SENSITIVE",
-        marks=list(inherited.marks) if inherited else [],
-        transformations=[*(inherited.transformations if inherited else []), "trusted_tool_derivation"],
+        trust=inherited.trust if inherited else "TOOL_OUTPUT",
+        marks=inherited_marks,
+        proofs={*inherited_proofs, "trusted_tool_derivation"},
         authorized_for_action_flow=_is_authorized_path(task_flow_contract, source_path),
         metadata={"tool": "get_iban", "derived_from": inherited.source_path if inherited else None},
     )
@@ -282,10 +303,29 @@ def _extract_iban_value(tool_output: Any) -> Any:
     return match.group(0) if match else tool_output
 
 
+def merge_provenance(records: list[ArgumentProvenance]) -> ArgumentProvenance:
+    if not records:
+        return ArgumentProvenance(value=None, source_paths=set(), marks=set(), proofs=set(), trust="UNKNOWN")
+    return ArgumentProvenance(
+        value=records[-1].value,
+        source_paths=set().union(*(record.source_paths for record in records)),
+        marks=set().union(*(record.marks for record in records)),
+        proofs=set().union(*(record.proofs for record in records)),
+        trust=_least_trusted(records),
+        metadata={},
+        source_path=records[-1].source_path,
+        authorized_for_action_flow=any(record.authorized_for_action_flow for record in records),
+    )
+
+
 def _is_authorized_path(task_flow_contract: Any | None, source_path: str) -> bool:
     if task_flow_contract is None:
         return False
-    return any(source_path in task_flow_contract.allowed_paths_for_sink(sink) for sink in task_flow_contract.flow_bindings)
+    if hasattr(task_flow_contract, "allowed_sources_for_sink"):
+        return any(source_path in task_flow_contract.allowed_sources_for_sink(sink) for sink in getattr(task_flow_contract, "argument_contract", {}))
+    if hasattr(task_flow_contract, "allowed_paths_for_sink"):
+        return any(source_path in task_flow_contract.allowed_paths_for_sink(sink) for sink in getattr(task_flow_contract, "flow_bindings", {}))
+    return False
 
 
 def _field_from_mapping(value: Any, names: tuple[str, ...]) -> Any | None:
@@ -317,8 +357,10 @@ def _normalize_value(value: Any) -> str:
     return str(value).strip()
 
 
-def _unique(values: list[str]) -> list[str]:
-    return list(dict.fromkeys(values))
+def _least_trusted(records: list[ArgumentProvenance]) -> str:
+    order = ["USER", "DELEGATED", "TOOL_OUTPUT", "EXTERNAL", "MODEL", "UNKNOWN"]
+    ranked = sorted(records, key=lambda record: order.index(record.trust) if record.trust in order else len(order))
+    return ranked[-1].trust if ranked else "UNKNOWN"
 
 
 def _parse_output(output: Any) -> Any:
@@ -330,66 +372,73 @@ def _parse_output(output: Any) -> Any:
         return output
 
 
-def _flatten_mapping(tool_name: str, data: dict[str, Any], records: list[IFCProvenanceRecord]) -> None:
+def _flatten_mapping(tool_name: str, data: dict[str, Any], records: list[ArgumentProvenance]) -> None:
     for key, value in data.items():
         field_name = _canonical_field_name(tool_name, str(key))
-        records.append(_flat_record(tool_name, field_name, value, ["structured_extraction"]))
+        records.append(_flat_record(tool_name, field_name, value, {"structured_extraction"}))
         if isinstance(value, dict):
             _flatten_mapping(tool_name, value, records)
         elif isinstance(value, list):
             _flatten_list(tool_name, value, records)
 
 
-def _flatten_list(tool_name: str, values: list[Any], records: list[IFCProvenanceRecord]) -> None:
+def _flatten_list(tool_name: str, values: list[Any], records: list[ArgumentProvenance]) -> None:
     for index, item in enumerate(values):
         if isinstance(item, dict):
             for key, value in item.items():
                 field_name = _canonical_field_name(tool_name, str(key))
-                records.append(_flat_record(tool_name, f"items.{index}.{field_name}", value, ["structured_extraction"]))
-                records.append(_flat_record(tool_name, field_name, value, ["structured_extraction"]))
+                records.append(_flat_record(tool_name, f"items.{index}.{field_name}", value, {"structured_extraction"}))
+                records.append(_flat_record(tool_name, field_name, value, {"structured_extraction"}))
             _add_selected_aliases(tool_name, item, records)
         else:
-            records.append(_flat_record(tool_name, f"items.{index}", item, ["structured_extraction"]))
+            records.append(_flat_record(tool_name, f"items.{index}", item, {"structured_extraction"}))
 
 
-def _add_selected_aliases(tool_name: str, item: dict[str, Any], records: list[IFCProvenanceRecord]) -> None:
-    for alias in _SELECTED_LIST_ALIASES.get(tool_name, ()):
+def _add_selected_aliases(tool_name: str, item: dict[str, Any], records: list[ArgumentProvenance]) -> None:
+    for alias in _SELECTED_LIST_ALIASES.get(tool_name, ()):  # pragma: no branch - simple alias expansion
         source_key = alias
         if source_key not in item and alias == "selected_file":
             source_key = "filename"
         if source_key in item:
-            records.append(_flat_record(tool_name, alias, item[source_key], ["structured_extraction"]))
+            records.append(_flat_record(tool_name, alias, item[source_key], {"structured_extraction"}))
 
 
-def _canonical_field_name(tool_name: str, key: str) -> str:
-    normalized = key.strip().lower().replace(" ", "_").replace("-", "_")
-    if normalized == "id":
-        if tool_name in {"get_received_emails", "get_unread_emails", "search_emails"}:
-            return "email_id"
-        if tool_name == "get_channels":
-            return "channel_id"
-        if tool_name == "get_day_calendar_events":
-            return "event_id"
-        if tool_name in {"read_file", "get_file_by_id", "search_files", "create_file", "append_to_file"}:
-            return "file_id"
-    return _FIELD_ALIASES.get(normalized, normalized)
-
-
-def _flat_record(tool_name: str, field_name: str, value: Any, transformations: list[str]) -> IFCProvenanceRecord:
-    return IFCProvenanceRecord(
+def _flat_record(tool_name: str, field_name: str, value: Any, proofs: set[str]) -> ArgumentProvenance:
+    source_path = f"{tool_name}.output.{field_name}"
+    marks = {"raw_external_content"} if tool_name in _RAW_EXTERNAL_TEXT_TOOLS else set()
+    trust = "EXTERNAL" if tool_name in _RAW_EXTERNAL_TEXT_TOOLS else "DELEGATED"
+    return ArgumentProvenance(
         value=value,
-        source_path=f"{tool_name}.output.{field_name}",
-        I_label="TOOL_OUTPUT",
-        C_label="INTERNAL",
-        marks=[],
-        transformations=transformations,
-        authorized_for_action_flow=False,
-        metadata={"tool": tool_name, "field": field_name, "kind": "flattened_tool_output"},
+        source_paths={source_path},
+        source_path=source_path,
+        trust=trust,
+        marks=marks,
+        proofs=set(proofs),
+        metadata={"tool": tool_name, "field": field_name},
     )
 
 
-def _dedupe_records(records: list[IFCProvenanceRecord]) -> list[IFCProvenanceRecord]:
-    deduped: dict[str, IFCProvenanceRecord] = {}
+def _dedupe_records(records: list[ArgumentProvenance]) -> list[ArgumentProvenance]:
+    deduped: dict[str, ArgumentProvenance] = {}
     for record in records:
-        deduped[record.source_path] = record
+        key = next(iter(record.source_paths), record.source_path or "")
+        if key not in deduped:
+            deduped[key] = record
+            continue
+        existing = deduped[key]
+        merged = merge_provenance([existing, record])
+        merged.value = record.value
+        merged.source_path = record.source_path or existing.source_path
+        deduped[key] = merged
     return list(deduped.values())
+
+
+def _canonical_field_name(tool_name: str, raw_name: str) -> str:
+    canonical = _FIELD_ALIASES.get(raw_name.lower().replace(" ", "_"))
+    if canonical:
+        return canonical
+    if tool_name == "get_received_emails" and raw_name == "id":
+        return "email_id"
+    if tool_name == "get_received_emails" and raw_name == "from":
+        return "sender"
+    return raw_name.replace(" ", "_")

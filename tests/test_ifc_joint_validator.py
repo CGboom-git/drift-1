@@ -5,7 +5,7 @@ import json
 from pact_drift.ifc_contract_generator import generate_ifc_global_contract
 from pact_drift.ifc_provenance import IFCProvenanceRecord, IFCProvenanceState
 from pact_drift.joint_validator import validate_tool_call_ifc_drift
-from pact_drift.task_flow_contract import FlowBinding, TaskFlowContract
+from pact_drift.task_flow_contract import ArgumentAuthorityBinding, TaskFlowContract, UnresolvedArgumentBinding
 
 
 def _schema(name: str, properties: dict[str, dict], description: str = "") -> dict:
@@ -33,34 +33,23 @@ def _call(tool_name: str, **arguments):
 
 
 def _task(global_contract):
-    arg = global_contract.tools["send_money"].args["amount"]
     return TaskFlowContract(
-        task_contract_version="pact_drift_ifc_task_v1",
-        task_type="banking_payment",
+        contract_version="argument_authority_contract_v1",
         allowed_trajectory=["send_money"],
-        opportunistic_read_policy={},
-        source_delegations=[],
-        flow_bindings={
-            "send_money.amount": [
-                FlowBinding(
-                    source_path="read_file.output.invoice.amount",
-                    sink="send_money.amount",
-                    I_after="DELEGATED",
-                    C_label="SENSITIVE",
-                    satisfies=list(arg.flow_constraints),
-                    endorsements=[],
-                    declassifications=[],
-                    reason="test",
-                )
-            ]
+        argument_contract={
+            "send_money.amount": ArgumentAuthorityBinding(
+                allowed_sources=["read_file.output.invoice.amount"],
+                required_proofs=["structured_extraction"],
+                reason="test",
+            )
         },
-        unresolved_bindings=[],
+        unresolved_bindings=[UnresolvedArgumentBinding(sink="send_money.recipient", reason="missing", policy="safe_refusal")],
     )
 
 
 def _state():
     state = IFCProvenanceState()
-    state.add_record(IFCProvenanceRecord("50.0", "read_file.output.invoice.amount", "DELEGATED", "SENSITIVE"))
+    state.add_record(IFCProvenanceRecord("50.0", {"read_file.output.invoice.amount"}, set(), {"structured_extraction"}, trust="DELEGATED", source_path="read_file.output.invoice.amount"))
     return state
 
 
@@ -167,7 +156,7 @@ def test_out_of_trajectory_action_can_request_replan_when_explicitly_enabled() -
 def test_read_output_not_authorized_for_action_by_default() -> None:
     global_contract = _global()
     state = IFCProvenanceState()
-    state.add_record(IFCProvenanceRecord("50.0", "search_web.output.amount", "TOOL_OUTPUT", "PUBLIC"))
+    state.add_record(IFCProvenanceRecord("50.0", {"search_web.output.amount"}, set(), {"structured_extraction"}, trust="TOOL_OUTPUT", source_path="search_web.output.amount"))
     result = validate_tool_call_ifc_drift(
         _call("send_money", amount="50.0"),
         query="pay invoice",
@@ -180,4 +169,4 @@ def test_read_output_not_authorized_for_action_by_default() -> None:
     )
     assert not result.allowed
     assert result.rejected_sink == "send_money.amount"
-    assert "source_path_not_authorized_by_task" in result.reason
+    assert "source_not_authorized" in result.reason
